@@ -9,11 +9,13 @@ export const Route = createFileRoute("/curso/$courseSlug")({ ssr: false, compone
 
 function CoursePage() {
   const { courseSlug } = useParams({ from: "/curso/$courseSlug" });
-  const { session } = useAuth();
+  const { session, isPlatformAdmin } = useAuth();
   const [course, setCourse] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
   const [hasAccess, setHasAccess] = useState(false);
+  const [inCatalog, setInCatalog] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -27,6 +29,18 @@ function CoursePage() {
         const { data: ent } = await supabase.from("course_entitlements").select("id").eq("user_id", session.user.id).eq("course_id", c.id).maybeSingle();
         const { data: enr } = await supabase.from("enrollments").select("id").eq("user_id", session.user.id).eq("course_id", c.id).maybeSingle();
         setHasAccess(!!ent || !!enr);
+        const { data: mems } = await supabase.from("organization_memberships")
+          .select("organization_id").eq("user_id", session.user.id).eq("is_active", true);
+        const orgIds = (mems ?? []).map((m: any) => m.organization_id);
+        if (orgIds.length) {
+          const { data: cat } = await supabase.from("organization_course_catalog")
+            .select("id").eq("course_id", c.id).eq("is_visible", true).in("organization_id", orgIds).limit(1);
+          setInCatalog((cat ?? []).length > 0);
+        } else {
+          setInCatalog(false);
+        }
+      } else {
+        setInCatalog(false);
       }
       setLoading(false);
     })();
@@ -34,7 +48,13 @@ function CoursePage() {
 
   const enroll = async () => {
     if (!session?.user || !course) return;
-    await supabase.from("enrollments").insert({ user_id: session.user.id, course_id: course.id });
+    setEnrollError(null);
+    if (!inCatalog && !isPlatformAdmin) {
+      setEnrollError("Este curso não está disponível no catálogo da sua organização.");
+      return;
+    }
+    const { error } = await supabase.from("enrollments").insert({ user_id: session.user.id, course_id: course.id });
+    if (error) { setEnrollError(error.message); return; }
     setHasAccess(true);
   };
 
@@ -78,9 +98,14 @@ function CoursePage() {
               <Link to="/curso/$courseSlug/aprender" params={{ courseSlug }} className="block text-center rounded-lg py-3 brand-btn font-medium">Continuar curso</Link>
             ) : course.external_checkout_url ? (
               <a href={course.external_checkout_url} target="_blank" rel="noopener" className="block text-center rounded-lg py-3 brand-btn font-medium">Comprar acesso</a>
+            ) : !inCatalog && !isPlatformAdmin ? (
+              <div className="text-center text-sm brand-text-muted rounded-lg py-3 border brand-border">
+                Curso indisponível no catálogo da sua organização.
+              </div>
             ) : (
               <button onClick={enroll} className="w-full rounded-lg py-3 brand-btn font-medium">Iniciar curso</button>
             )}
+            {enrollError && <p className="text-xs text-red-400 mt-2">{enrollError}</p>}
           </div>
         </aside>
       </main>

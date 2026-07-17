@@ -1,18 +1,23 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/lib/tenant/TenantProvider";
+import { useAuth } from "@/lib/auth/AuthProvider";
 
 type Org = { id: string; slug: string; name: string };
 
 export function TenantDemoSwitcher() {
   const { tenant, overrideSlug } = useTenant();
+  const { isPlatformAdmin, loading } = useAuth();
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    if (!isPlatformAdmin) return;
     supabase.from("organizations").select("id, slug, name").eq("status", "active").order("name")
       .then(({ data }) => setOrgs((data as Org[]) ?? []));
-  }, []);
+  }, [isPlatformAdmin]);
+
+  if (loading || !isPlatformAdmin) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
