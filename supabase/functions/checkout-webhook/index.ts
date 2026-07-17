@@ -108,19 +108,23 @@ Deno.serve(async (req) => {
       user_id: userId,
       course_id: course.id,
       source: body.source ?? "external_checkout",
-      external_order_id: body.external_order_id ?? null,
     },
     { onConflict: "user_id,course_id" },
   );
   if (entErr) return json({ error: entErr.message }, 500);
 
-  // 4. Audit trail.
+  // 4. Audit trail (external order id lives here for traceability).
   await admin.from("audit_logs").insert({
-    actor_id: null,
+    actor_user_id: null,
     action: "checkout_webhook.grant_entitlement",
-    target_type: "course_entitlement",
-    target_id: course.id,
-    metadata: { email, course_slug: courseSlug, external_order_id: body.external_order_id ?? null, source: body.source ?? null },
+    entity_type: "course_entitlement",
+    entity_id: course.id,
+    metadata: {
+      email,
+      course_slug: courseSlug,
+      external_order_id: body.external_order_id ?? null,
+      source: body.source ?? null,
+    },
   });
 
   return json({ ok: true, user_id: userId, course_id: course.id });
