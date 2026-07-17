@@ -22,7 +22,7 @@ export function VimeoPlayer({ videoUrl, startAt = 0, onProgress, onEnded, thrott
   useEffect(() => {
     if (!containerRef.current) return;
     const player = new Player(containerRef.current, {
-      url: videoUrl,
+      url: videoUrl as unknown as never,
       responsive: true,
       dnt: true,
     });
