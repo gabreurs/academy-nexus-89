@@ -1,12 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { useTenant } from "@/lib/tenant/TenantProvider";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { useTenantIdentity } from "@/lib/tenant/useTenantIdentity";
 
 export function SiteHeader() {
   const { tenant } = useTenant();
-  const { session, isPlatformAdmin, isOrgAdmin, signOut } = useAuth();
+  const { isOrgAdmin, signOut } = useAuth();
+  const { visibleSession, hasTenantAccess, isPlatformAdmin } = useTenantIdentity();
   const org = tenant?.organization;
   const logo = tenant?.branding?.logo_light_url;
+  // Only show authenticated chrome when the session actually belongs on this
+  // tenant. On a foreign tenant, present the visitor experience.
+  const showAuthed = !!visibleSession && hasTenantAccess;
 
   return (
     <header className="border-b brand-border sticky top-0 z-40 backdrop-blur" style={{ background: "color-mix(in oklab, var(--brand-bg) 90%, transparent)" }}>
@@ -20,7 +25,7 @@ export function SiteHeader() {
         </Link>
         <nav className="flex items-center gap-1 text-sm">
           <Link to="/catalogo" className="px-3 py-1.5 rounded hover:bg-white/5">Catálogo</Link>
-          {session ? (
+          {showAuthed ? (
             <>
               <Link to="/inicio" className="px-3 py-1.5 rounded hover:bg-white/5">Minha área</Link>
               {isOrgAdmin() && <Link to="/empresa" className="px-3 py-1.5 rounded hover:bg-white/5">Empresa</Link>}

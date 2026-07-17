@@ -158,10 +158,16 @@ Deno.serve(async (req) => {
     invitedByEmail = true;
     // Membership will be attached when the user finishes signup (or via a
     // trigger). We optimistically create it so seats reflect immediately.
-    await admin.from("organization_memberships").upsert(
+    const { error: memErr } = await admin.from("organization_memberships").upsert(
       { organization_id: organizationId, user_id: userId, role, is_active: true },
       { onConflict: "organization_id,user_id" },
     );
+    if (memErr) return json({ error: memErr.message }, 500);
+    // Mark the invite accepted so it does not double-count against the seat
+    // limit (the optimistic membership above already counts as 1 seat).
+    await admin.from("organization_invites")
+      .update({ status: "accepted", accepted_at: new Date().toISOString() })
+      .eq("id", inviteId);
   }
 
   await admin.from("audit_logs").insert({
