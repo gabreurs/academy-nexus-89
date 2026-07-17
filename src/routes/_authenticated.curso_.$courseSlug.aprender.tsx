@@ -1,4 +1,4 @@
-import { createFileRoute, useParams, Link } from "@tanstack/react-router";
+import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -7,24 +7,60 @@ export const Route = createFileRoute("/_authenticated/curso_/$courseSlug/aprende
 
 function Player() {
   const { courseSlug } = useParams({ from: "/_authenticated/curso_/$courseSlug/aprender" });
-  const { session } = useAuth();
+  const { session, isPlatformAdmin } = useAuth();
+  const navigate = useNavigate();
   const [course, setCourse] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
+  const [accessChecked, setAccessChecked] = useState(false);
+  const [denied, setDenied] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     (async () => {
       const { data: c } = await supabase.from("courses").select("*").eq("slug", courseSlug).maybeSingle();
-      if (!c) return;
+      if (!c) { setAccessChecked(true); setDenied(true); return; }
       setCourse(c);
+
+      // Access gate: platform_admin bypass; else must have entitlement OR enrollment.
+      // For exclusive courses, also require membership in owner org OR catalog entry in user's org.
+      let allowed = isPlatformAdmin;
+      if (!allowed && session?.user) {
+        const uid = session.user.id;
+        const [{ data: ent }, { data: enr }] = await Promise.all([
+          supabase.from("course_entitlements").select("id").eq("user_id", uid).eq("course_id", c.id).maybeSingle(),
+          supabase.from("enrollments").select("id").eq("user_id", uid).eq("course_id", c.id).maybeSingle(),
+        ]);
+        allowed = !!ent || !!enr;
+        if (allowed && c.visibility === "exclusive") {
+          const { data: mems } = await supabase.from("organization_memberships")
+            .select("organization_id").eq("user_id", uid).eq("is_active", true);
+          const orgIds = (mems ?? []).map((m: any) => m.organization_id);
+          const ownerOk = c.owner_org_id && orgIds.includes(c.owner_org_id);
+          let catalogOk = false;
+          if (!ownerOk && orgIds.length) {
+            const { data: cat } = await supabase.from("organization_course_catalog")
+              .select("id").eq("course_id", c.id).eq("is_visible", true).in("organization_id", orgIds).limit(1);
+            catalogOk = (cat ?? []).length > 0;
+          }
+          allowed = ownerOk || catalogOk;
+        }
+      }
+      if (!allowed) {
+        setAccessChecked(true);
+        setDenied(true);
+        navigate({ to: "/curso/$courseSlug", params: { courseSlug }, search: { denied: 1 } as any, replace: true });
+        return;
+      }
+      setAccessChecked(true);
+
       const { data: mods } = await supabase.from("course_modules").select("*, course_lessons(*)").eq("course_id", c.id).order("sort_order");
       setModules((mods as any[]) ?? []);
       const { data: cp } = await supabase.from("course_progress").select("*").eq("user_id", session!.user.id).eq("course_id", c.id).maybeSingle();
       const firstLesson = ((mods as any[]) ?? [])[0]?.course_lessons?.sort((a: any, b: any) => a.sort_order - b.sort_order)?.[0]?.id;
       setCurrentLessonId(cp?.last_lesson_id ?? firstLesson ?? null);
     })();
-  }, [courseSlug]);
+  }, [courseSlug, session?.user?.id, isPlatformAdmin]);
 
   const flatLessons = useMemo(
     () => modules.flatMap((m) => (m.course_lessons ?? []).sort((a: any, b: any) => a.sort_order - b.sort_order)),
@@ -58,7 +94,8 @@ function Player() {
     return () => clearInterval(iv);
   }, [current?.id]);
 
-  if (!course || !current) return <div className="min-h-screen p-8">Carregando…</div>;
+  if (denied) return <div className="min-h-screen p-8">Acesso negado. Redirecionando…</div>;
+  if (!accessChecked || !course || !current) return <div className="min-h-screen p-8">Carregando…</div>;
 
   return (
     <div className="min-h-screen grid lg:grid-cols-[1fr_360px]">
