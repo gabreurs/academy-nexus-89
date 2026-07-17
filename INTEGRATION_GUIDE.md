@@ -221,6 +221,33 @@ administradora se for **explicitamente convidado** por ela depois, via
 contratual entre marcas: a Guarida não ganha acesso à lista de compradores
 B2C só porque compartilham motor.
 
+#### Teste manual — comprador B2C após checkout
+
+1. Configure `CHECKOUT_WEBHOOK_SECRET` no ambiente da Edge Function.
+2. Dispare o webhook simulando venda aprovada:
+   ```bash
+   curl -X POST "$SUPABASE_URL/functions/v1/checkout-webhook" \
+     -H "content-type: application/json" \
+     -H "x-webhook-secret: $CHECKOUT_WEBHOOK_SECRET" \
+     -d '{
+       "event": "purchase.approved",
+       "email": "comprador.b2c@example.com",
+       "full_name": "Comprador B2C",
+       "course_slug": "gestao-financeira-condominios",
+       "external_order_id": "test_manual_001",
+       "source": "manual_test"
+     }'
+   ```
+3. Aceite o convite recebido por e-mail (ou defina a senha via reset).
+4. Acesse `play.sindicolab.com` (domínio principal / demo do tenant plataforma)
+   e faça login com `comprador.b2c@example.com`.
+5. Resultado esperado:
+   - `/inicio` carrega normalmente (não redireciona como visitante).
+   - A seção "Meus cursos comprados" mostra o curso liberado via entitlement.
+   - Ao abrir um subdomínio de white-label (`guarida.sindicolab.com` ou
+     `/demo/guarida`), o header volta ao modo visitante — comprador B2C
+     não é membro da Guarida.
+
 ### Regra de produção (obrigatória — NÃO otimizar)
 
 Quando os subdomínios reais entrarem no ar
