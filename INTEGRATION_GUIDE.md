@@ -1,0 +1,132 @@
+# INTEGRATION_GUIDE.md
+
+Guia prático para conectar o MVP da SíndicoLab Academy ao mundo real:
+vídeos hospedados no Vimeo e webhooks de checkout externo (Kiwify e afins).
+
+---
+
+## 1. Vídeos no Vimeo
+
+O player agora usa o **Vimeo Player SDK** (`@vimeo/player`) via iframe.
+A coluna `course_lessons.video_url` aceita qualquer URL do Vimeo:
+
+| Formato aceito                                        | Exemplo                                       |
+| ----------------------------------------------------- | --------------------------------------------- |
+| Página pública                                        | `https://vimeo.com/76979871`                  |
+| Embed direto                                          | `https://player.vimeo.com/video/76979871`     |
+| Vídeo **não listado** (com hash secreto)              | `https://vimeo.com/76979871/abc123def4`       |
+| Vídeo **não listado** no formato embed                | `https://player.vimeo.com/video/76979871?h=abc123def4` |
+
+### Trocar um vídeo de aula
+
+1. Suba o vídeo real no Vimeo (idealmente com privacidade **"Não listado"** +
+   domínio embed restrito ao seu domínio white label).
+2. Copie a URL da página do vídeo.
+3. Atualize `course_lessons.video_url`:
+
+```sql
+update public.course_lessons
+set video_url = 'https://vimeo.com/SEU_ID/HASH'
+where slug = 'aula-1';
+```
+
+### Como funciona o rastreio de progresso
+
+O componente `src/components/player/VimeoPlayer.tsx`:
+
+- Escuta o evento `timeupdate` do Vimeo Player e emite `onProgress(sec)` a
+  cada 10 segundos (throttle), gravando `lesson_progress.position_seconds` e
+  recalculando `course_progress.percent`.
+- Escuta `ended` para marcar `lesson_progress.completed_at`.
+- Ao carregar a aula, faz `player.setCurrentTime(startAt)` a partir do último
+  `position_seconds` salvo — o aluno retoma exatamente de onde parou.
+
+> Nenhum arquivo MP4 é servido diretamente. Trocar o provedor futuramente
+> (YouTube, Cloudflare Stream, Bunny) é só substituir o componente do player;
+> a lógica de progresso e a rota do banco não mudam.
+
+---
+
+## 2. Webhook de checkout externo
+
+**Edge Function:** `checkout-webhook`
+**URL:** `https://<project-ref>.supabase.co/functions/v1/checkout-webhook`
+
+Ao receber uma notificação de compra aprovada, a função:
+
+1. Resolve o curso pelo `course_slug`.
+2. Resolve o comprador pelo e-mail — se ainda não existir, dispara
+   `auth.admin.inviteUserByEmail` (fluxo de convite: o comprador define a
+   senha ao clicar no link recebido).
+3. Faz `upsert` em `course_entitlements` (idempotente por `user_id + course_id`).
+4. Registra a operação em `audit_logs` com o `external_order_id`.
+
+### Estado atual — MVP
+
+A função já está no ar e aceita um **payload genérico** (formato próprio):
+
+```http
+POST /functions/v1/checkout-webhook
+Content-Type: application/json
+x-webhook-secret: <valor de CHECKOUT_WEBHOOK_SECRET>
+
+{
+  "event": "purchase.approved",
+  "email": "buyer@example.com",
+  "full_name": "Nome do Comprador",
+  "course_slug": "atendimento-guarida",
+  "external_order_id": "kw_TESTE_001",
+  "source": "kiwify"
+}
+```
+
+### Teste rápido com `curl`
+
+```bash
+curl -X POST "https://<project-ref>.supabase.co/functions/v1/checkout-webhook" \
+  -H "Content-Type: application/json" \
+  -H "x-webhook-secret: $CHECKOUT_WEBHOOK_SECRET" \
+  -d '{
+    "event": "purchase.approved",
+    "email": "aluno@vista-alegre.demo",
+    "course_slug": "atendimento-guarida",
+    "external_order_id": "kw_TESTE_001",
+    "source": "kiwify"
+  }'
+```
+
+Retorno esperado: `{ "ok": true, "user_id": "...", "course_id": "..." }`.
+
+### Segredos necessários
+
+| Nome                        | Onde configurar                        | Uso                                              |
+| --------------------------- | -------------------------------------- | ------------------------------------------------ |
+| `CHECKOUT_WEBHOOK_SECRET`   | Backend → Edge Functions → Secrets     | Header `x-webhook-secret` (validação simples)    |
+| `SUPABASE_SERVICE_ROLE_KEY` | já provisionado pelo Lovable Cloud     | Convite/criação de usuário + `course_entitlements` |
+| `SUPABASE_URL`              | já provisionado                        | Cliente admin                                    |
+
+### Quando a Kiwify liberar as credenciais reais
+
+Substitua **apenas** o bloco de autenticação do webhook por uma verificação
+de assinatura HMAC no formato que a Kiwify documentar (normalmente header
+`X-Kiwify-Signature` + segredo do produto). O restante da função
+(resolução de curso, convite, entitlement, auditoria) já está pronto e
+não precisa mudar.
+
+O mesmo endpoint atende Hotmart, Eduzz ou Stripe: basta mapear o payload
+do provedor para o shape genérico acima antes de gravar o entitlement, ou
+criar variantes (`checkout-webhook-kiwify`, `checkout-webhook-hotmart`)
+que reaproveitam a mesma lógica.
+
+---
+
+## 3. Avaliações e comentários
+
+- **Avaliações** (`course_reviews`): 1–5 estrelas + texto curto na página do
+  curso. Nota média e contagem aparecem no topo da seção. Só quem tem acesso
+  ao curso (entitlement/enrollment) vê o formulário; a RLS já rejeita quem
+  tentar burlar o `WITH CHECK`.
+- **Comentários por aula** (`lesson_comments`): abaixo do player. Comentários
+  de usuários com papel `org_admin` ou `platform_admin` recebem badge
+  destacado ("Instrutor" / "Equipe"), inspirado no padrão Kiwify/Hotmart.
+  Admins também podem alternar `is_answered` para sinalizar dúvidas resolvidas.
