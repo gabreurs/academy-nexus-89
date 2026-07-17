@@ -42,7 +42,10 @@ Deno.serve(async (req) => {
 
   const expected = Deno.env.get("CHECKOUT_WEBHOOK_SECRET");
   const provided = req.headers.get("x-webhook-secret");
-  if (expected && provided !== expected) {
+  if (!expected) {
+    return json({ error: "webhook secret not configured" }, 500);
+  }
+  if (provided !== expected) {
     return json({ error: "Invalid webhook secret" }, 401);
   }
 
