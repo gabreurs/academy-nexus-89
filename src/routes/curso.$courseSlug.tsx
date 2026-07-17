@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { TenantDemoSwitcher } from "@/components/site/TenantDemoSwitcher";
+import { CourseReviews } from "@/components/course/CourseReviews";
 
 export const Route = createFileRoute("/curso/$courseSlug")({ ssr: false, component: CoursePage });
 
@@ -86,6 +87,7 @@ function CoursePage() {
               </div>
             ))}
           </div>
+          <CourseReviews courseId={course.id} canReview={hasAccess} />
         </div>
         <aside className="brand-surface rounded-xl p-6 border brand-border h-fit sticky top-24">
           <p className="text-xs brand-text-muted uppercase tracking-widest">{course.level}</p>
