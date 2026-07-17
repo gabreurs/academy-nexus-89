@@ -4,6 +4,28 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* SíndicoLab Academy — brand tokens (defaults; overridden at runtime by BrandingProvider) */
+:root {
+  --brand-primary: #7C3AED;
+  --brand-secondary: #1F1B2E;
+  --brand-accent: #A855F7;
+  --brand-bg: #0A0710;
+  --brand-surface: #14101F;
+  --brand-surface-2: #1C1730;
+  --brand-text: #F5F5F7;
+  --brand-muted: #9CA3AF;
+  --brand-border: rgba(255,255,255,0.08);
+}
+
+html, body { background: var(--brand-bg); color: var(--brand-text); font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif; }
+.brand-btn { background: var(--brand-primary); color: white; }
+.brand-btn:hover { filter: brightness(1.1); }
+.brand-surface { background: var(--brand-surface); }
+.brand-surface-2 { background: var(--brand-surface-2); }
+.brand-border { border-color: var(--brand-border); }
+.brand-accent { color: var(--brand-accent); }
+.brand-text-muted { color: var(--brand-muted); }
+
 /*
  * Design system definition.
  *
