@@ -2,6 +2,8 @@ import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-r
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { VimeoPlayer } from "@/components/player/VimeoPlayer";
+import { LessonComments } from "@/components/course/LessonComments";
 
 export const Route = createFileRoute("/_authenticated/curso_/$courseSlug/aprender")({ ssr: false, component: Player });
 
@@ -14,7 +16,7 @@ function Player() {
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
   const [accessChecked, setAccessChecked] = useState(false);
   const [denied, setDenied] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const lastPositionRef = useRef(0);
 
   useEffect(() => {
     (async () => {
@@ -69,6 +71,17 @@ function Player() {
 
   const currentIndex = flatLessons.findIndex((l: any) => l.id === currentLessonId);
   const current = flatLessons[currentIndex];
+  const [startAt, setStartAt] = useState(0);
+
+  useEffect(() => {
+    lastPositionRef.current = 0;
+    (async () => {
+      if (!session?.user || !current) { setStartAt(0); return; }
+      const { data: lp } = await supabase.from("lesson_progress")
+        .select("position_seconds").eq("user_id", session.user.id).eq("lesson_id", current.id).maybeSingle();
+      setStartAt(lp?.position_seconds ?? 0);
+    })();
+  }, [current?.id, session?.user?.id]);
 
   const upsertProgress = async (opts: { position?: number; completed?: boolean }) => {
     if (!session || !course || !current) return;
@@ -86,14 +99,6 @@ function Player() {
     }, { onConflict: "user_id,course_id" });
   };
 
-  useEffect(() => {
-    if (!current) return;
-    const iv = setInterval(() => {
-      if (videoRef.current && !videoRef.current.paused) upsertProgress({ position: videoRef.current.currentTime });
-    }, 10000);
-    return () => clearInterval(iv);
-  }, [current?.id]);
-
   if (denied) return <div className="min-h-screen p-8">Acesso negado. Redirecionando…</div>;
   if (!accessChecked || !course || !current) return <div className="min-h-screen p-8">Carregando…</div>;
 
@@ -102,18 +107,24 @@ function Player() {
       <div className="p-4 lg:p-8">
         <Link to="/curso/$courseSlug" params={{ courseSlug }} className="text-sm brand-text-muted">← {course.title}</Link>
         <div className="mt-4 aspect-video brand-surface rounded-xl overflow-hidden">
-          <video ref={videoRef} src={current.video_url} controls className="w-full h-full" onEnded={() => upsertProgress({ position: 0, completed: true })} />
+          <VimeoPlayer
+            videoUrl={current.video_url}
+            startAt={startAt}
+            onProgress={(sec) => { lastPositionRef.current = sec; upsertProgress({ position: sec }); }}
+            onEnded={() => upsertProgress({ position: 0, completed: true })}
+          />
         </div>
         <h1 className="mt-6 text-2xl font-semibold">{current.title}</h1>
         <p className="mt-2 brand-text-muted">{current.description}</p>
         <div className="mt-6 flex gap-2">
           <button disabled={currentIndex <= 0} onClick={() => setCurrentLessonId(flatLessons[currentIndex - 1].id)}
             className="px-4 py-2 rounded brand-surface border brand-border disabled:opacity-40">← Anterior</button>
-          <button onClick={() => upsertProgress({ position: videoRef.current?.currentTime ?? 0, completed: true })}
+          <button onClick={() => upsertProgress({ position: lastPositionRef.current, completed: true })}
             className="px-4 py-2 rounded brand-btn font-medium">Marcar como concluída</button>
           <button disabled={currentIndex >= flatLessons.length - 1} onClick={() => setCurrentLessonId(flatLessons[currentIndex + 1].id)}
             className="px-4 py-2 rounded brand-surface border brand-border disabled:opacity-40">Próxima →</button>
         </div>
+        <LessonComments courseId={course.id} lessonId={current.id} />
       </div>
       <aside className="brand-surface border-l brand-border p-4 overflow-y-auto max-h-screen">
         <p className="text-xs brand-text-muted uppercase tracking-wider mb-3">Conteúdo</p>

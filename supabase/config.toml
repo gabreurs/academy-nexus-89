@@ -1,1 +1,4 @@
 project_id = "wgchbuqopwxnozlsjlzq"
+
+[functions.checkout-webhook]
+verify_jwt = false
