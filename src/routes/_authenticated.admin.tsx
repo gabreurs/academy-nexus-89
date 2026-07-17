@@ -11,7 +11,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 type Org = {
-  id: string; slug: string; name: string; status: "active" | "suspended" | "archived";
+  id: string; slug: string; name: string; status: "active" | "suspended";
   user_limit: number | null; is_platform: boolean; created_at: string;
 };
 type Course = { id: string; slug: string; title: string; status: string; visibility: string };
@@ -69,7 +69,7 @@ function AdminPage() {
     const limit = parseInt(newOrg.user_limit || "0", 10);
     if (!slug || !newOrg.name) { setBusy(false); setMsg("Slug e nome são obrigatórios."); return; }
     const { data: org, error } = await supabase.from("organizations").insert({
-      slug, name: newOrg.name.trim(), user_limit: limit || null, status: "active",
+      slug, name: newOrg.name.trim(), user_limit: limit || undefined, status: "active",
     }).select().single();
     if (error) { setBusy(false); setMsg(error.message); return; }
     // Default branding
@@ -86,7 +86,7 @@ function AdminPage() {
 
   const updateLimit = async (orgId: string, value: string) => {
     const n = parseInt(value, 10);
-    await supabase.from("organizations").update({ user_limit: isNaN(n) ? null : n }).eq("id", orgId);
+    await supabase.from("organizations").update({ user_limit: isNaN(n) ? undefined : n }).eq("id", orgId);
     refresh();
   };
 
@@ -169,7 +169,6 @@ function AdminPage() {
                         className="rounded px-2 py-1 brand-surface-2 border brand-border text-sm">
                         <option value="active">Ativa</option>
                         <option value="suspended">Suspensa</option>
-                        <option value="archived">Arquivada</option>
                       </select>
                     </td>
                     <td className="px-4 py-2.5 text-right">
