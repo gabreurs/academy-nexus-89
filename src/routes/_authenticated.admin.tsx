@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { TenantDemoSwitcher } from "@/components/site/TenantDemoSwitcher";
+import { CourseManager } from "@/components/admin/CourseManager";
+import { BrandingEditor } from "@/components/branding/BrandingEditor";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   ssr: false,
@@ -209,6 +211,21 @@ function AdminPage() {
           </div>
         </section>
       )}
+
+      {selectedOrg && (
+        <section className="mt-8">
+          <h2 className="text-lg font-medium">
+            Marca — {orgs.find((o) => o.id === selectedOrg)?.name}
+          </h2>
+          <div className="mt-4 brand-surface rounded-xl border brand-border p-6">
+            <BrandingEditor organizationId={selectedOrg} />
+          </div>
+        </section>
+      )}
+
+      <section className="mt-10">
+        <CourseManager orgs={orgs} />
+      </section>
     </Shell>
   );
 }
