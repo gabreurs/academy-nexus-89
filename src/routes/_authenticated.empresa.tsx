@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { useTenant } from "@/lib/tenant/TenantProvider";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { TenantDemoSwitcher } from "@/components/site/TenantDemoSwitcher";
+import { BrandingEditor } from "@/components/branding/BrandingEditor";
 
 export const Route = createFileRoute("/_authenticated/empresa")({
   ssr: false,
@@ -237,6 +238,17 @@ function EmpresaPage() {
               </tbody>
             </table>
           )}
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-lg font-medium">Marca da empresa</h2>
+        <p className="text-sm brand-text-muted mt-1">
+          Ajustes aqui aparecem apenas para os alunos desta organização. Você só consegue
+          editar a marca da sua própria empresa — o banco recusa qualquer outra tentativa.
+        </p>
+        <div className="mt-4 brand-surface rounded-xl border brand-border p-6">
+          <BrandingEditor organizationId={orgId} />
         </div>
       </section>
     </Shell>
