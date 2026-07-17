@@ -168,3 +168,54 @@ logado como `org_admin` da organização alvo ou `platform_admin`).
 
 O `platform_admin` altera `organizations.user_limit` diretamente em **/admin**
 (coluna Limite, edita e sai do foco para salvar).
+
+---
+
+## Fronteira de identidade entre organizações (multi-tenant)
+
+Cada organização é um white-label distinto — empresa própria, CNPJ próprio,
+contrato próprio. A arquitetura compartilha o motor (mesmo banco, mesma
+autenticação Supabase), mas a **experiência do usuário nunca pode dar a
+impressão de que existe uma conta guarda-chuva atravessando marcas**.
+
+### Regra de UI (implementada)
+
+Quando o tenant resolvido para o host atual **não corresponde a nenhuma
+organização** da qual o usuário logado é membro ativo, e o usuário **não é
+`platform_admin`**, a aplicação trata a sessão, **naquele domínio**, como
+se o visitante estivesse deslogado:
+
+- O header não exibe nome/avatar/"Sair" nem os links de área autenticada
+  ("Minha área", "Empresa", "Admin"); mostra apenas o CTA "Entrar" como
+  para qualquer visitante público.
+- As rotas sob `_authenticated/*` fazem `navigate("/", replace: true)` no
+  cliente quando a fronteira é violada — o usuário cai na landing pública
+  do tenant atual em vez de ver dados/atalhos da conta de outra marca.
+- A sessão Supabase **não é destruída**: ela continua válida no domínio
+  onde o usuário realmente pertence. O corte é puramente de apresentação
+  nesse host.
+
+Implementação: `src/lib/tenant/useTenantIdentity.ts` deriva
+`hasTenantAccess = isPlatformAdmin || memberships.some(m => m.organization_id === tenant.id && m.is_active)`;
+`SiteHeader` e o shell `_authenticated` consomem esse sinal.
+
+### Regra de produção (obrigatória — NÃO otimizar)
+
+Quando os subdomínios reais entrarem no ar
+(`guarida.sindicolab.com`, `vista-alegre.sindicolab.com`, etc.), a sessão do
+Supabase Auth **NUNCA** deve ser configurada para ser compartilhada entre
+subdomínios:
+
+- **Não** definir cookie de sessão em domínio compartilhado
+  (`.sindicolab.com`, `.dominio.com` etc.).
+- **Não** persistir o access/refresh token em `localStorage` sob uma
+  origem-pai; manter o comportamento default do Supabase JS
+  (`localStorage` da própria origem/subdomínio).
+- Cada subdomínio mantém sua própria sessão isolada — exatamente como o
+  navegador já faz por padrão. Isso é feature, não bug: reforça a
+  fronteira de identidade acima em nível de plataforma.
+
+Esta escolha **não deve ser "otimizada"** no futuro em nome de single
+sign-on entre marcas, a menos que exista uma decisão de negócio explícita
+e deliberada (contratual, com Rafael e Mari) permitindo a experiência
+guarda-chuva. Até lá, o padrão é: **uma sessão por white-label**.
