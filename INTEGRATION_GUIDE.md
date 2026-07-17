@@ -130,3 +130,41 @@ que reaproveitam a mesma lógica.
   de usuários com papel `org_admin` ou `platform_admin` recebem badge
   destacado ("Instrutor" / "Equipe"), inspirado no padrão Kiwify/Hotmart.
   Admins também podem alternar `is_answered` para sinalizar dúvidas resolvidas.
+---
+
+## 3. Convite de usuário (`invite-user`)
+
+Edge Function chamada pela tela **/empresa** (org admin) para convidar novos
+usuários por e-mail real. Respeita o campo `organizations.user_limit`.
+
+### Contrato
+
+`POST /functions/v1/invite-user` (JWT obrigatório — o chamador precisa estar
+logado como `org_admin` da organização alvo ou `platform_admin`).
+
+```json
+{
+  "organization_id": "uuid",
+  "email": "novo@empresa.com",
+  "role": "student",              // ou "org_admin"
+  "full_name": "Nome opcional"
+}
+```
+
+### Fluxo
+
+1. Valida caller via `is_platform_admin` / `has_org_role`.
+2. Conta assentos usados = membros ativos (`student` + `org_admin`) + convites
+   pendentes. Rejeita com **409 `user_limit_reached`** se atingido.
+3. Se o e-mail já pertence a um `profiles`, apenas cria/atualiza o vínculo em
+   `organization_memberships`.
+4. Caso contrário, `auth.admin.inviteUserByEmail` envia o e-mail de convite e
+   já registra o `organization_memberships` de forma otimista (o assento é
+   contado imediatamente).
+5. Grava `organization_invites` (idempotente por `org + email + pending`) e
+   `audit_logs`.
+
+### Aumentar o limite
+
+O `platform_admin` altera `organizations.user_limit` diretamente em **/admin**
+(coluna Limite, edita e sai do foco para salvar).
