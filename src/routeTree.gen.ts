@@ -17,6 +17,7 @@ import { Route as DemoTenantSlugRouteImport } from './routes/demo.$tenantSlug'
 import { Route as CursoCourseSlugRouteImport } from './routes/curso.$courseSlug'
 import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated.inicio'
 import { Route as AuthenticatedEmpresaRouteImport } from './routes/_authenticated.empresa'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as AuthenticatedCursoCourseSlugAprenderRouteImport } from './routes/_authenticated.curso_.$courseSlug.aprender'
 
 const LoginRoute = LoginRouteImport.update({
@@ -58,6 +59,11 @@ const AuthenticatedEmpresaRoute = AuthenticatedEmpresaRouteImport.update({
   path: '/empresa',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCursoCourseSlugAprenderRoute =
   AuthenticatedCursoCourseSlugAprenderRouteImport.update({
     id: '/curso_/$courseSlug/aprender',
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/catalogo': typeof CatalogoRoute
   '/login': typeof LoginRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/empresa': typeof AuthenticatedEmpresaRoute
   '/inicio': typeof AuthenticatedInicioRoute
   '/curso/$courseSlug': typeof CursoCourseSlugRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/catalogo': typeof CatalogoRoute
   '/login': typeof LoginRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/empresa': typeof AuthenticatedEmpresaRoute
   '/inicio': typeof AuthenticatedInicioRoute
   '/curso/$courseSlug': typeof CursoCourseSlugRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/catalogo': typeof CatalogoRoute
   '/login': typeof LoginRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/empresa': typeof AuthenticatedEmpresaRoute
   '/_authenticated/inicio': typeof AuthenticatedInicioRoute
   '/curso/$courseSlug': typeof CursoCourseSlugRoute
@@ -103,6 +112,7 @@ export interface FileRouteTypes {
     | '/'
     | '/catalogo'
     | '/login'
+    | '/admin'
     | '/empresa'
     | '/inicio'
     | '/curso/$courseSlug'
@@ -113,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/catalogo'
     | '/login'
+    | '/admin'
     | '/empresa'
     | '/inicio'
     | '/curso/$courseSlug'
@@ -124,6 +135,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/catalogo'
     | '/login'
+    | '/_authenticated/admin'
     | '/_authenticated/empresa'
     | '/_authenticated/inicio'
     | '/curso/$courseSlug'
@@ -198,6 +210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEmpresaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/curso_/$courseSlug/aprender': {
       id: '/_authenticated/curso_/$courseSlug/aprender'
       path: '/curso/$courseSlug/aprender'
@@ -209,12 +228,14 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedEmpresaRoute: typeof AuthenticatedEmpresaRoute
   AuthenticatedInicioRoute: typeof AuthenticatedInicioRoute
   AuthenticatedCursoCourseSlugAprenderRoute: typeof AuthenticatedCursoCourseSlugAprenderRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedEmpresaRoute: AuthenticatedEmpresaRoute,
   AuthenticatedInicioRoute: AuthenticatedInicioRoute,
   AuthenticatedCursoCourseSlugAprenderRoute:
