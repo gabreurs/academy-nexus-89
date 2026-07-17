@@ -59,10 +59,18 @@ function EmpresaPage() {
     const { data: o } = await supabase.from("organizations").select("*").eq("id", orgId).maybeSingle();
     setOrg(o);
     const { data: mems } = await supabase.from("organization_memberships")
-      .select("id, user_id, role, is_active, created_at, profiles(email, full_name)")
+      .select("id, user_id, role, is_active, created_at")
       .eq("organization_id", orgId)
       .order("created_at", { ascending: false });
-    setMembers((mems as Member[]) ?? []);
+    const rows = (mems ?? []) as Omit<Member, "profiles">[];
+    const userIds = rows.map((r) => r.user_id);
+    let profileMap: Record<string, { email: string | null; full_name: string | null }> = {};
+    if (userIds.length) {
+      const { data: profs } = await supabase.from("profiles")
+        .select("id, email, full_name").in("id", userIds);
+      (profs ?? []).forEach((p: any) => { profileMap[p.id] = { email: p.email, full_name: p.full_name }; });
+    }
+    setMembers(rows.map((r) => ({ ...r, profiles: profileMap[r.user_id] ?? null })));
     const { data: invs } = await supabase.from("organization_invites")
       .select("id, email, role, status, created_at, expires_at")
       .eq("organization_id", orgId)
