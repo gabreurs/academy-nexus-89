@@ -9,38 +9,148 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as CatalogoRouteImport } from './routes/catalogo'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DemoTenantSlugRouteImport } from './routes/demo.$tenantSlug'
+import { Route as CursoCourseSlugRouteImport } from './routes/curso.$courseSlug'
+import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated.inicio'
+import { Route as AuthenticatedCursoCourseSlugAprenderRouteImport } from './routes/_authenticated.curso_.$courseSlug.aprender'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogoRoute = CatalogoRouteImport.update({
+  id: '/catalogo',
+  path: '/catalogo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DemoTenantSlugRoute = DemoTenantSlugRouteImport.update({
+  id: '/demo/$tenantSlug',
+  path: '/demo/$tenantSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CursoCourseSlugRoute = CursoCourseSlugRouteImport.update({
+  id: '/curso/$courseSlug',
+  path: '/curso/$courseSlug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedInicioRoute = AuthenticatedInicioRouteImport.update({
+  id: '/inicio',
+  path: '/inicio',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCursoCourseSlugAprenderRoute =
+  AuthenticatedCursoCourseSlugAprenderRouteImport.update({
+    id: '/curso_/$courseSlug/aprender',
+    path: '/curso/$courseSlug/aprender',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/catalogo': typeof CatalogoRoute
+  '/login': typeof LoginRoute
+  '/inicio': typeof AuthenticatedInicioRoute
+  '/curso/$courseSlug': typeof CursoCourseSlugRoute
+  '/demo/$tenantSlug': typeof DemoTenantSlugRoute
+  '/curso/$courseSlug/aprender': typeof AuthenticatedCursoCourseSlugAprenderRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/catalogo': typeof CatalogoRoute
+  '/login': typeof LoginRoute
+  '/inicio': typeof AuthenticatedInicioRoute
+  '/curso/$courseSlug': typeof CursoCourseSlugRoute
+  '/demo/$tenantSlug': typeof DemoTenantSlugRoute
+  '/curso/$courseSlug/aprender': typeof AuthenticatedCursoCourseSlugAprenderRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/catalogo': typeof CatalogoRoute
+  '/login': typeof LoginRoute
+  '/_authenticated/inicio': typeof AuthenticatedInicioRoute
+  '/curso/$courseSlug': typeof CursoCourseSlugRoute
+  '/demo/$tenantSlug': typeof DemoTenantSlugRoute
+  '/_authenticated/curso_/$courseSlug/aprender': typeof AuthenticatedCursoCourseSlugAprenderRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/catalogo'
+    | '/login'
+    | '/inicio'
+    | '/curso/$courseSlug'
+    | '/demo/$tenantSlug'
+    | '/curso/$courseSlug/aprender'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/catalogo'
+    | '/login'
+    | '/inicio'
+    | '/curso/$courseSlug'
+    | '/demo/$tenantSlug'
+    | '/curso/$courseSlug/aprender'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/catalogo'
+    | '/login'
+    | '/_authenticated/inicio'
+    | '/curso/$courseSlug'
+    | '/demo/$tenantSlug'
+    | '/_authenticated/curso_/$courseSlug/aprender'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  CatalogoRoute: typeof CatalogoRoute
+  LoginRoute: typeof LoginRoute
+  CursoCourseSlugRoute: typeof CursoCourseSlugRoute
+  DemoTenantSlugRoute: typeof DemoTenantSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catalogo': {
+      id: '/catalogo'
+      path: '/catalogo'
+      fullPath: '/catalogo'
+      preLoaderRoute: typeof CatalogoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +158,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/demo/$tenantSlug': {
+      id: '/demo/$tenantSlug'
+      path: '/demo/$tenantSlug'
+      fullPath: '/demo/$tenantSlug'
+      preLoaderRoute: typeof DemoTenantSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/curso/$courseSlug': {
+      id: '/curso/$courseSlug'
+      path: '/curso/$courseSlug'
+      fullPath: '/curso/$courseSlug'
+      preLoaderRoute: typeof CursoCourseSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/inicio': {
+      id: '/_authenticated/inicio'
+      path: '/inicio'
+      fullPath: '/inicio'
+      preLoaderRoute: typeof AuthenticatedInicioRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/curso_/$courseSlug/aprender': {
+      id: '/_authenticated/curso_/$courseSlug/aprender'
+      path: '/curso/$courseSlug/aprender'
+      fullPath: '/curso/$courseSlug/aprender'
+      preLoaderRoute: typeof AuthenticatedCursoCourseSlugAprenderRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedInicioRoute: typeof AuthenticatedInicioRoute
+  AuthenticatedCursoCourseSlugAprenderRoute: typeof AuthenticatedCursoCourseSlugAprenderRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedInicioRoute: AuthenticatedInicioRoute,
+  AuthenticatedCursoCourseSlugAprenderRoute:
+    AuthenticatedCursoCourseSlugAprenderRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  CatalogoRoute: CatalogoRoute,
+  LoginRoute: LoginRoute,
+  CursoCourseSlugRoute: CursoCourseSlugRoute,
+  DemoTenantSlugRoute: DemoTenantSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
