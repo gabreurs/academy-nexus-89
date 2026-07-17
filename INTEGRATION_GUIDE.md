@@ -199,6 +199,28 @@ Implementação: `src/lib/tenant/useTenantIdentity.ts` deriva
 `hasTenantAccess = isPlatformAdmin || memberships.some(m => m.organization_id === tenant.id && m.is_active)`;
 `SiteHeader` e o shell `_authenticated` consomem esse sinal.
 
+### Compradores B2C (checkout externo) pertencem à organização plataforma
+
+Comprador avulso que chega via `checkout-webhook` (Kiwify/Hotmart/etc.) recebe:
+
+1. `course_entitlements` (user_id + course_id) — direito real ao curso.
+2. `organization_memberships` na organização com `is_platform = true`
+   (SíndicoLab), com `role = 'student'` e `is_active = true`. Upsert em
+   `(organization_id, user_id)` — idempotente.
+
+A membership na organização plataforma existe **exclusivamente para
+satisfazer `hasTenantAccess` no domínio principal** (`play.sindicolab.com`).
+Sem ela, o comprador B2C — que nunca foi convidado por nenhuma
+administradora — seria tratado como visitante anônimo pela fronteira de
+identidade e expulso de `/inicio`, mesmo tendo comprado.
+
+Regra dura: **comprador B2C nunca é atribuído a uma organização de
+white-label** (Guarida, Vista Alegre, etc.). Só passa a pertencer a uma
+administradora se for **explicitamente convidado** por ela depois, via
+`/empresa` (Edge Function `invite-user`). Isso preserva o isolamento
+contratual entre marcas: a Guarida não ganha acesso à lista de compradores
+B2C só porque compartilham motor.
+
 ### Regra de produção (obrigatória — NÃO otimizar)
 
 Quando os subdomínios reais entrarem no ar
