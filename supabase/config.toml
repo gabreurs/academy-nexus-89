@@ -2,3 +2,6 @@ project_id = "wgchbuqopwxnozlsjlzq"
 
 [functions.checkout-webhook]
 verify_jwt = false
+
+[functions.invite-user]
+verify_jwt = true
