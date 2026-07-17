@@ -116,7 +116,30 @@ Deno.serve(async (req) => {
   );
   if (entErr) return json({ error: entErr.message }, 500);
 
-  // 4. Audit trail (external order id lives here for traceability).
+  // 4. Ensure buyer belongs to the platform organization (SindicoLab) as a student.
+  //    B2C buyers never get attached to a white-label org — only the platform org —
+  //    so hasTenantAccess passes on the main domain (play.sindicolab.com) without
+  //    leaking them into any administradora's tenant. See INTEGRATION_GUIDE.md.
+  const { data: platformOrg, error: platformErr } = await admin
+    .from("organizations")
+    .select("id")
+    .eq("is_platform", true)
+    .maybeSingle();
+  if (platformErr) return json({ error: platformErr.message }, 500);
+  if (platformOrg) {
+    const { error: memErr } = await admin.from("organization_memberships").upsert(
+      {
+        organization_id: platformOrg.id,
+        user_id: userId,
+        role: "student",
+        is_active: true,
+      },
+      { onConflict: "organization_id,user_id" },
+    );
+    if (memErr) return json({ error: memErr.message }, 500);
+  }
+
+  // 5. Audit trail (external order id lives here for traceability).
   await admin.from("audit_logs").insert({
     actor_user_id: null,
     action: "checkout_webhook.grant_entitlement",
