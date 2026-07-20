@@ -8,7 +8,8 @@ export function SiteHeader() {
   const { isOrgAdmin, signOut } = useAuth();
   const { visibleSession, hasTenantAccess, isPlatformAdmin } = useTenantIdentity();
   const org = tenant?.organization;
-  const logo = tenant?.branding?.logo_light_url;
+  const logoLight = tenant?.branding?.logo_light_url; // para fundos claros
+  const logoDark = tenant?.branding?.logo_dark_url;   // para fundos escuros (player)
   // Only show authenticated chrome when the session actually belongs on this
   // tenant. On a foreign tenant, present the visitor experience.
   const showAuthed = !!visibleSession && hasTenantAccess;
@@ -23,8 +24,23 @@ export function SiteHeader() {
     >
       <div className="container-x h-16 flex items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-3">
-          {logo ? (
-            <img src={logo} alt={org?.name ?? ""} className="h-8" />
+          {logoLight || logoDark ? (
+            <>
+              {logoLight && (
+                <img
+                  src={logoLight}
+                  alt={org?.name ?? ""}
+                  className="h-6 md:h-7 logo-on-light"
+                />
+              )}
+              {logoDark && (
+                <img
+                  src={logoDark}
+                  alt={org?.name ?? ""}
+                  className="h-6 md:h-7 logo-on-dark"
+                />
+              )}
+            </>
           ) : (
             <span className="font-display text-lg" style={{ color: "var(--brand-text)" }}>
               {org?.name ?? "Academy"}
