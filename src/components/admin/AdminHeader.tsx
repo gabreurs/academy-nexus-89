@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth/AuthProvider";
 
-export function AdminHeader() {
+export function AdminHeader({
+  subtitle = "Console de administração",
+}: { subtitle?: string }) {
   const { signOut, user } = useAuth();
   return (
     <header
@@ -19,7 +21,7 @@ export function AdminHeader() {
           <div className="leading-tight">
             <p className="font-semibold tracking-tight text-sm">SíndicoLab</p>
             <p className="text-[11px] brand-text-muted uppercase tracking-widest">
-              Console de administração
+              {subtitle}
             </p>
           </div>
         </div>
