@@ -275,6 +275,15 @@ html.lenis, html.lenis body { height: auto; }
 .player-shell .brand-accent   { color: var(--tenant-accent); }
 .player-shell .brand-text-muted { color: var(--player-ink-soft); }
 
+/* Header adere ao palco escuro quando dentro do player-shell */
+.player-shell > header {
+  background: color-mix(in oklab, var(--player-bg) 82%, transparent) !important;
+  border-color: var(--player-border) !important;
+}
+.player-shell > header a,
+.player-shell > header button { color: var(--player-ink) !important; }
+.player-shell > header .brand-text-muted { color: var(--player-ink-soft) !important; }
+
 /* Hero do player (inspirado no /play do institucional) */
 .player-hero {
   position: relative;
