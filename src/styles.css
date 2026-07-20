@@ -27,6 +27,25 @@ html, body { background: var(--brand-bg); color: var(--brand-text); font-family:
 .brand-text-muted { color: var(--brand-muted); }
 
 /*
+ * Admin console — neutral, fixed identity.
+ * Never inherits tenant branding, regardless of TenantDemoSwitcher selection.
+ */
+.admin-console {
+  --brand-primary: #2563eb;
+  --brand-secondary: #0f172a;
+  --brand-accent: #38bdf8;
+  --brand-bg: #0b1020;
+  --brand-surface: #111a2e;
+  --brand-surface-2: #17223b;
+  --brand-text: #e5e7eb;
+  --brand-muted: #94a3b8;
+  --brand-border: rgba(148, 163, 184, 0.16);
+  background: var(--brand-bg);
+  color: var(--brand-text);
+  min-height: 100vh;
+}
+
+/*
  * Design system definition.
  *
  * The @theme inline block maps CSS custom properties to Tailwind utility

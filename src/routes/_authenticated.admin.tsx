@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { SiteHeader } from "@/components/site/SiteHeader";
+import { AdminHeader } from "@/components/admin/AdminHeader";
 import { TenantDemoSwitcher } from "@/components/site/TenantDemoSwitcher";
 import { CourseManager } from "@/components/admin/CourseManager";
 import { BrandingEditor } from "@/components/branding/BrandingEditor";
@@ -232,8 +232,8 @@ function AdminPage() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen">
-      <SiteHeader />
+    <div className="admin-console">
+      <AdminHeader />
       <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
       <TenantDemoSwitcher />
     </div>
