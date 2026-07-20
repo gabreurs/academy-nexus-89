@@ -287,6 +287,67 @@ html.lenis, html.lenis body { height: auto; }
 .player-shell > header button { color: var(--player-ink) !important; }
 .player-shell > header .brand-text-muted { color: var(--player-ink-soft) !important; }
 
+/* Header integrado à hero (sem separador) quando existe .player-shell.has-hero-header */
+.player-shell.has-hero-header > header {
+  background: linear-gradient(180deg, rgba(5,7,14,.75) 0%, rgba(5,7,14,.25) 60%, transparent 100%) !important;
+  border-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Cover-art fallback: gradientes cinematográficos determinísticos */
+.cover-art {
+  position: relative;
+  overflow: hidden;
+  background: #0a0f1e;
+}
+.cover-art::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(120% 80% at 20% 30%, color-mix(in oklab, var(--tenant-accent) 55%, transparent) 0%, transparent 55%),
+    radial-gradient(90% 70% at 80% 80%, rgba(120, 60, 220, 0.55) 0%, transparent 60%),
+    linear-gradient(160deg, #0b1024 0%, #050710 100%);
+}
+.cover-art::after {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.15), transparent 50%),
+    radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,.12), transparent 50%),
+    radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,.10), transparent 50%);
+  mix-blend-mode: screen;
+  opacity: .6;
+}
+.cover-art > .cover-art-title {
+  position: absolute; inset: 0;
+  display: flex; align-items: flex-end;
+  padding: 14px 16px;
+  font-family: "Mona Sans", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: rgba(247,250,255,.95);
+  font-size: clamp(18px, 2.4vw, 28px);
+  text-shadow: 0 2px 24px rgba(0,0,0,.55);
+  z-index: 1;
+}
+
+/* Rail scroller — esconde scrollbar mas mantém funcional */
+.rail-scroller { scrollbar-width: none; }
+.rail-scroller::-webkit-scrollbar { display: none; }
+
+/* Rail card hover reveal (desktop) */
+.rail-card { transition: transform .35s cubic-bezier(.2,.7,.2,1); }
+@media (hover: hover) {
+  .rail-card:hover { transform: translateY(-4px) scale(1.02); z-index: 2; }
+  .rail-card:hover .rail-card-reveal { opacity: 1; transform: translateY(0); }
+}
+.rail-card-reveal {
+  opacity: 0; transform: translateY(6px);
+  transition: opacity .3s ease, transform .3s ease;
+}
+
 /* Swap de logos: padrão = fundo claro (ink). Player-shell = fundo escuro (white). */
 .logo-on-dark { display: none; }
 .player-shell .logo-on-light { display: none; }
