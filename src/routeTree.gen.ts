@@ -12,10 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CatalogoRouteImport } from './routes/catalogo'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTenantSlugRouteImport } from './routes/demo.$tenantSlug'
 import { Route as CursoCourseSlugRouteImport } from './routes/curso.$courseSlug'
-import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated.inicio'
 import { Route as AuthenticatedEmpresaRouteImport } from './routes/_authenticated.empresa'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as AuthenticatedCursoCourseSlugAprenderRouteImport } from './routes/_authenticated.curso_.$courseSlug.aprender'
@@ -34,11 +32,6 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DemoTenantSlugRoute = DemoTenantSlugRouteImport.update({
   id: '/demo/$tenantSlug',
   path: '/demo/$tenantSlug',
@@ -48,11 +41,6 @@ const CursoCourseSlugRoute = CursoCourseSlugRouteImport.update({
   id: '/curso/$courseSlug',
   path: '/curso/$courseSlug',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedInicioRoute = AuthenticatedInicioRouteImport.update({
-  id: '/inicio',
-  path: '/inicio',
-  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedEmpresaRoute = AuthenticatedEmpresaRouteImport.update({
   id: '/empresa',
@@ -72,36 +60,32 @@ const AuthenticatedCursoCourseSlugAprenderRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AuthenticatedRouteWithChildren
   '/catalogo': typeof CatalogoRoute
   '/login': typeof LoginRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/empresa': typeof AuthenticatedEmpresaRoute
-  '/inicio': typeof AuthenticatedInicioRoute
   '/curso/$courseSlug': typeof CursoCourseSlugRoute
   '/demo/$tenantSlug': typeof DemoTenantSlugRoute
   '/curso/$courseSlug/aprender': typeof AuthenticatedCursoCourseSlugAprenderRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/': typeof AuthenticatedRouteWithChildren
   '/catalogo': typeof CatalogoRoute
   '/login': typeof LoginRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/empresa': typeof AuthenticatedEmpresaRoute
-  '/inicio': typeof AuthenticatedInicioRoute
   '/curso/$courseSlug': typeof CursoCourseSlugRoute
   '/demo/$tenantSlug': typeof DemoTenantSlugRoute
   '/curso/$courseSlug/aprender': typeof AuthenticatedCursoCourseSlugAprenderRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/catalogo': typeof CatalogoRoute
   '/login': typeof LoginRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/empresa': typeof AuthenticatedEmpresaRoute
-  '/_authenticated/inicio': typeof AuthenticatedInicioRoute
   '/curso/$courseSlug': typeof CursoCourseSlugRoute
   '/demo/$tenantSlug': typeof DemoTenantSlugRoute
   '/_authenticated/curso_/$courseSlug/aprender': typeof AuthenticatedCursoCourseSlugAprenderRoute
@@ -114,7 +98,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin'
     | '/empresa'
-    | '/inicio'
     | '/curso/$courseSlug'
     | '/demo/$tenantSlug'
     | '/curso/$courseSlug/aprender'
@@ -125,26 +108,22 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin'
     | '/empresa'
-    | '/inicio'
     | '/curso/$courseSlug'
     | '/demo/$tenantSlug'
     | '/curso/$courseSlug/aprender'
   id:
     | '__root__'
-    | '/'
     | '/_authenticated'
     | '/catalogo'
     | '/login'
     | '/_authenticated/admin'
     | '/_authenticated/empresa'
-    | '/_authenticated/inicio'
     | '/curso/$courseSlug'
     | '/demo/$tenantSlug'
     | '/_authenticated/curso_/$courseSlug/aprender'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   CatalogoRoute: typeof CatalogoRoute
   LoginRoute: typeof LoginRoute
@@ -175,13 +154,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/demo/$tenantSlug': {
       id: '/demo/$tenantSlug'
       path: '/demo/$tenantSlug'
@@ -195,13 +167,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/curso/$courseSlug'
       preLoaderRoute: typeof CursoCourseSlugRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/inicio': {
-      id: '/_authenticated/inicio'
-      path: '/inicio'
-      fullPath: '/inicio'
-      preLoaderRoute: typeof AuthenticatedInicioRouteImport
-      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/empresa': {
       id: '/_authenticated/empresa'
@@ -230,14 +195,12 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedEmpresaRoute: typeof AuthenticatedEmpresaRoute
-  AuthenticatedInicioRoute: typeof AuthenticatedInicioRoute
   AuthenticatedCursoCourseSlugAprenderRoute: typeof AuthenticatedCursoCourseSlugAprenderRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedEmpresaRoute: AuthenticatedEmpresaRoute,
-  AuthenticatedInicioRoute: AuthenticatedInicioRoute,
   AuthenticatedCursoCourseSlugAprenderRoute:
     AuthenticatedCursoCourseSlugAprenderRoute,
 }
@@ -247,7 +210,6 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   CatalogoRoute: CatalogoRoute,
   LoginRoute: LoginRoute,
