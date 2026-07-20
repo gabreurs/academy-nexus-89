@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useTenant } from "@/lib/tenant/TenantProvider";
@@ -51,6 +51,19 @@ function EmpresaPage() {
   const [role, setRole] = useState<"student" | "org_admin">("student");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  // CSV bulk import
+  const csvInputRef = useRef<HTMLInputElement | null>(null);
+  const [csvBusy, setCsvBusy] = useState(false);
+  const [csvProgress, setCsvProgress] = useState<{ done: number; total: number } | null>(null);
+  const [csvReport, setCsvReport] = useState<null | {
+    sent: number;
+    limitReached: number;
+    invalid: number;
+    duplicated: number;
+    otherErrors: number;
+    errors: { email: string; reason: string }[];
+  }>(null);
 
   const canAccess = isPlatformAdmin || adminOrgIds.length > 0;
 
@@ -127,6 +140,82 @@ function EmpresaPage() {
     refresh();
   };
 
+  const parseCsv = (text: string): { email: string; role: "student" | "org_admin" }[] => {
+    const rows: { email: string; role: "student" | "org_admin" }[] = [];
+    const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (!lines.length) return rows;
+    // Detect delimiter (comma or semicolon)
+    const delim = lines[0].includes(";") && !lines[0].includes(",") ? ";" : ",";
+    const header = lines[0].toLowerCase().split(delim).map((c) => c.trim());
+    const hasHeader = header.includes("email");
+    const emailIdx = hasHeader ? header.indexOf("email") : 0;
+    const roleIdx = hasHeader ? header.indexOf("role") : 1;
+    const dataLines = hasHeader ? lines.slice(1) : lines;
+    const seen = new Set<string>();
+    for (const line of dataLines) {
+      const cols = line.split(delim).map((c) => c.trim().replace(/^"|"$/g, ""));
+      const email = (cols[emailIdx] ?? "").toLowerCase();
+      if (!email) continue;
+      const roleRaw = (roleIdx >= 0 ? cols[roleIdx] : "")?.toLowerCase();
+      const role: "student" | "org_admin" = roleRaw === "org_admin" || roleRaw === "admin" ? "org_admin" : "student";
+      if (seen.has(email)) continue;
+      seen.add(email);
+      rows.push({ email, role });
+    }
+    return rows;
+  };
+
+  const importCsv = async (file: File) => {
+    if (!session || !orgId) return;
+    setCsvBusy(true);
+    setCsvReport(null);
+    setCsvProgress(null);
+    const text = await file.text();
+    const rows = parseCsv(text);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const report = { sent: 0, limitReached: 0, invalid: 0, duplicated: 0, otherErrors: 0, errors: [] as { email: string; reason: string }[] };
+    setCsvProgress({ done: 0, total: rows.length });
+
+    for (let i = 0; i < rows.length; i++) {
+      const { email, role: r } = rows[i];
+      if (!emailRegex.test(email)) {
+        report.invalid++;
+        report.errors.push({ email, reason: "E-mail inválido" });
+        setCsvProgress({ done: i + 1, total: rows.length });
+        continue;
+      }
+      const { data, error } = await supabase.functions.invoke("invite-user", {
+        body: { organization_id: orgId, email, role: r },
+      });
+      if (error) {
+        const ctx = (error as any).context;
+        let parsed: any = null;
+        if (ctx && typeof ctx.json === "function") {
+          try { parsed = await ctx.json(); } catch {}
+        }
+        const code = parsed?.error ?? "";
+        const msg = parsed?.message ?? parsed?.error ?? error.message;
+        if (code === "user_limit_reached") report.limitReached++;
+        else if (/duplicat|already/i.test(msg)) report.duplicated++;
+        else report.otherErrors++;
+        report.errors.push({ email, reason: msg });
+      } else {
+        // Existing user attached — treat as success but flag as duplicate context.
+        if ((data as any)?.invited_by_email === false) {
+          report.sent++;
+        } else {
+          report.sent++;
+        }
+      }
+      setCsvProgress({ done: i + 1, total: rows.length });
+    }
+
+    setCsvBusy(false);
+    setCsvReport(report);
+    if (csvInputRef.current) csvInputRef.current.value = "";
+    await refresh();
+  };
+
   return (
     <Shell>
       <div className="flex items-baseline justify-between flex-wrap gap-4">
@@ -173,6 +262,67 @@ function EmpresaPage() {
             {message.text}
           </p>
         )}
+
+        <div className="mt-6 pt-6 border-t brand-border">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h3 className="text-sm font-medium">Importar CSV</h3>
+              <p className="text-xs brand-text-muted mt-1">
+                Colunas aceitas: <code>email</code> (obrigatório) e <code>role</code> (opcional: <code>student</code> ou <code>org_admin</code>, padrão <code>student</code>).
+                Cada linha usa a mesma função de convite — respeita o limite de assentos.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                ref={csvInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) importCsv(f);
+                }}
+              />
+              <button
+                type="button"
+                disabled={csvBusy}
+                onClick={() => csvInputRef.current?.click()}
+                className="rounded-lg px-4 py-2 brand-surface-2 border brand-border text-sm hover:opacity-90 disabled:opacity-50"
+              >
+                {csvBusy ? "Importando…" : "Importar CSV"}
+              </button>
+            </div>
+          </div>
+          {csvBusy && csvProgress && (
+            <p className="mt-3 text-xs brand-text-muted">
+              Processando {csvProgress.done} de {csvProgress.total}…
+            </p>
+          )}
+          {csvReport && (
+            <div className="mt-4 rounded-lg brand-surface-2 border brand-border p-4 text-sm">
+              <p className="font-medium">Resumo da importação</p>
+              <ul className="mt-2 space-y-1 text-xs">
+                <li className="text-emerald-400">✓ {csvReport.sent} convite(s) enviado(s) / vinculado(s)</li>
+                <li>• {csvReport.limitReached} bloqueado(s) por limite de assentos</li>
+                <li>• {csvReport.invalid} e-mail(is) inválido(s)</li>
+                <li>• {csvReport.duplicated} duplicado(s) / já existente(s)</li>
+                <li>• {csvReport.otherErrors} outro(s) erro(s)</li>
+              </ul>
+              {csvReport.errors.length > 0 && (
+                <details className="mt-3">
+                  <summary className="cursor-pointer brand-text-muted text-xs">Ver detalhes de falhas ({csvReport.errors.length})</summary>
+                  <ul className="mt-2 space-y-1 text-xs max-h-48 overflow-auto">
+                    {csvReport.errors.map((e, idx) => (
+                      <li key={idx} className="brand-text-muted">
+                        <span className="text-red-400">{e.email}</span> — {e.reason}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </div>
+          )}
+        </div>
       </section>
 
       <section className="mt-8">
