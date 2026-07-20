@@ -38,6 +38,9 @@ function applyBrandingVars(t: ResolvedTenant | null) {
   root.style.setProperty("--brand-bg", b.background_color);
   root.style.setProperty("--brand-surface", b.surface_color);
   root.style.setProperty("--brand-text", b.text_color);
+  // Ponte semântica: --tenant-accent é a única cor de marca que sobrevive
+  // dentro do palco escuro do player. Sempre acompanha o acento do tenant.
+  root.style.setProperty("--tenant-accent", b.accent_color);
   if (b.environment_name) document.title = b.environment_name;
   if (b.favicon_url) {
     let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");

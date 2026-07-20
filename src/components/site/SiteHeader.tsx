@@ -14,26 +14,46 @@ export function SiteHeader() {
   const showAuthed = !!visibleSession && hasTenantAccess;
 
   return (
-    <header className="border-b brand-border sticky top-0 z-40 backdrop-blur" style={{ background: "color-mix(in oklab, var(--brand-bg) 90%, transparent)" }}>
-      <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between gap-4">
+    <header
+      className="sticky top-0 z-40 border-b backdrop-blur"
+      style={{
+        borderColor: "var(--brand-border)",
+        background: "color-mix(in oklab, var(--brand-bg) 82%, transparent)",
+      }}
+    >
+      <div className="container-x h-16 flex items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-3">
           {logo ? (
             <img src={logo} alt={org?.name ?? ""} className="h-8" />
           ) : (
-            <span className="font-semibold tracking-tight text-lg">{org?.name ?? "Academy"}</span>
+            <span className="font-display text-lg" style={{ color: "var(--brand-text)" }}>
+              {org?.name ?? "Academy"}
+            </span>
           )}
         </Link>
         <nav className="flex items-center gap-1 text-sm">
-          <Link to="/catalogo" className="px-3 py-1.5 rounded hover:bg-white/5">Catálogo</Link>
+          <Link to="/catalogo" className="px-3 py-1.5 rounded-full hover:opacity-80 transition"
+                style={{ color: "var(--brand-text)" }}>Catálogo</Link>
           {showAuthed ? (
             <>
-              <Link to="/inicio" className="px-3 py-1.5 rounded hover:bg-white/5">Minha área</Link>
-              {isOrgAdmin() && <Link to="/empresa" className="px-3 py-1.5 rounded hover:bg-white/5">Empresa</Link>}
-              {isPlatformAdmin && <Link to="/admin" className="px-3 py-1.5 rounded hover:bg-white/5">Admin</Link>}
-              <button onClick={signOut} className="px-3 py-1.5 rounded hover:bg-white/5 brand-text-muted">Sair</button>
+              <Link to="/inicio" className="px-3 py-1.5 rounded-full hover:opacity-80 transition"
+                    style={{ color: "var(--brand-text)" }}>Minha área</Link>
+              {isOrgAdmin() && (
+                <Link to="/empresa" className="px-3 py-1.5 rounded-full hover:opacity-80 transition"
+                      style={{ color: "var(--brand-text)" }}>Empresa</Link>
+              )}
+              {isPlatformAdmin && (
+                <Link to="/admin" className="px-3 py-1.5 rounded-full hover:opacity-80 transition"
+                      style={{ color: "var(--brand-text)" }}>Admin</Link>
+              )}
+              <button onClick={signOut} className="px-3 py-1.5 rounded-full transition brand-text-muted hover:opacity-80">
+                Sair
+              </button>
             </>
           ) : (
-            <Link to="/login" className="px-3 py-1.5 rounded brand-btn">Entrar</Link>
+            <Link to="/login" className="btn-primary">
+              Entrar <span className="btn-arrow">→</span>
+            </Link>
           )}
         </nav>
       </div>

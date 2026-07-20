@@ -99,14 +99,22 @@ function Player() {
     }, { onConflict: "user_id,course_id" });
   };
 
-  if (denied) return <div className="min-h-screen p-8">Acesso negado. Redirecionando…</div>;
-  if (!accessChecked || !course || !current) return <div className="min-h-screen p-8">Carregando…</div>;
+  if (denied)
+    return <div className="player-shell p-8"><p className="player-muted">Acesso negado. Redirecionando…</p></div>;
+  if (!accessChecked || !course || !current)
+    return <div className="player-shell p-8"><p className="player-muted">Carregando…</p></div>;
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-[1fr_360px]">
+    <div className="player-shell grid lg:grid-cols-[1fr_360px]">
       <div className="p-4 lg:p-8">
-        <Link to="/curso/$courseSlug" params={{ courseSlug }} className="text-sm brand-text-muted">← {course.title}</Link>
-        <div className="mt-4 aspect-video brand-surface rounded-xl overflow-hidden">
+        <Link
+          to="/curso/$courseSlug"
+          params={{ courseSlug }}
+          className="text-xs uppercase tracking-widest player-muted hover:opacity-80"
+        >
+          ← {course.title}
+        </Link>
+        <div className="mt-4 aspect-video player-surface rounded-2xl overflow-hidden border player-border">
           <VimeoPlayer
             videoUrl={current.video_url}
             startAt={startAt}
@@ -114,28 +122,50 @@ function Player() {
             onEnded={() => upsertProgress({ position: 0, completed: true })}
           />
         </div>
-        <h1 className="mt-6 text-2xl font-semibold">{current.title}</h1>
-        <p className="mt-2 brand-text-muted">{current.description}</p>
-        <div className="mt-6 flex gap-2">
-          <button disabled={currentIndex <= 0} onClick={() => setCurrentLessonId(flatLessons[currentIndex - 1].id)}
-            className="px-4 py-2 rounded brand-surface border brand-border disabled:opacity-40">← Anterior</button>
-          <button onClick={() => upsertProgress({ position: lastPositionRef.current, completed: true })}
-            className="px-4 py-2 rounded brand-btn font-medium">Marcar como concluída</button>
-          <button disabled={currentIndex >= flatLessons.length - 1} onClick={() => setCurrentLessonId(flatLessons[currentIndex + 1].id)}
-            className="px-4 py-2 rounded brand-surface border brand-border disabled:opacity-40">Próxima →</button>
+        <h1 className="mt-6 font-display text-2xl md:text-3xl">{current.title}</h1>
+        {current.description && <p className="mt-2 player-muted">{current.description}</p>}
+        <div className="mt-6 flex flex-wrap gap-2">
+          <button
+            disabled={currentIndex <= 0}
+            onClick={() => setCurrentLessonId(flatLessons[currentIndex - 1].id)}
+            className="px-4 py-2 rounded-full player-surface border player-border disabled:opacity-40"
+          >
+            ← Anterior
+          </button>
+          <button
+            onClick={() => upsertProgress({ position: lastPositionRef.current, completed: true })}
+            className="player-cta"
+          >
+            Marcar como concluída
+          </button>
+          <button
+            disabled={currentIndex >= flatLessons.length - 1}
+            onClick={() => setCurrentLessonId(flatLessons[currentIndex + 1].id)}
+            className="px-4 py-2 rounded-full player-surface border player-border disabled:opacity-40"
+          >
+            Próxima →
+          </button>
         </div>
         <LessonComments courseId={course.id} lessonId={current.id} />
       </div>
-      <aside className="brand-surface border-l brand-border p-4 overflow-y-auto max-h-screen">
-        <p className="text-xs brand-text-muted uppercase tracking-wider mb-3">Conteúdo</p>
+      <aside className="player-surface border-l player-border p-5 overflow-y-auto max-h-screen">
+        <p className="text-xs player-muted uppercase tracking-widest mb-4">Conteúdo</p>
         {modules.map((m) => (
-          <div key={m.id} className="mb-4">
-            <p className="text-sm font-medium mb-1">{m.title}</p>
+          <div key={m.id} className="mb-5">
+            <p className="text-sm font-display mb-2">{m.title}</p>
             <ul className="space-y-0.5">
               {(m.course_lessons ?? []).sort((a: any, b: any) => a.sort_order - b.sort_order).map((l: any) => (
                 <li key={l.id}>
-                  <button onClick={() => setCurrentLessonId(l.id)}
-                    className={"w-full text-left text-sm px-2 py-1.5 rounded " + (l.id === currentLessonId ? "brand-btn" : "hover:bg-white/5")}>
+                  <button
+                    onClick={() => setCurrentLessonId(l.id)}
+                    className={
+                      "w-full text-left text-sm px-3 py-2 rounded-lg transition " +
+                      (l.id === currentLessonId
+                        ? "player-cta"
+                        : "hover:bg-white/5 player-muted")
+                    }
+                    style={l.id === currentLessonId ? undefined : { color: "var(--player-ink)" }}
+                  >
                     {l.title}
                   </button>
                 </li>
