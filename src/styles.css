@@ -298,17 +298,20 @@ html.lenis, html.lenis body { height: auto; }
    Não herda branding do tenant selecionado no switcher.
    ============================================================ */
 .admin-console {
-  --brand-primary: #2563eb;
-  --brand-secondary: #0f172a;
-  --brand-accent: #38bdf8;
-  --brand-bg: #0b1020;
-  --brand-surface: #111a2e;
-  --brand-surface-2: #17223b;
-  --brand-text: #e5e7eb;
-  --brand-muted: #94a3b8;
-  --brand-border: rgba(148, 163, 184, 0.16);
-  --tenant-accent: #38bdf8;
-  --tenant-accent-ink: #0b1020;
+  /* Grafite neutro derivado da tinta real do repositório institucional
+     (--ink = oklch(0.13 0.022 255) / --foreground = oklch(0.16 0.022 255)).
+     Console é ferramenta interna: sem cor de marca, sem azul genérico. */
+  --brand-primary:   oklch(0.16 0.022 255);
+  --brand-secondary: oklch(0.13 0.022 255);
+  --brand-accent:    oklch(0.55 0.018 255);
+  --brand-bg:        oklch(0.14 0.020 255);
+  --brand-surface:   oklch(0.18 0.020 255);
+  --brand-surface-2: oklch(0.22 0.018 255);
+  --brand-text:      oklch(0.96 0.005 255);
+  --brand-muted:     oklch(0.68 0.012 255);
+  --brand-border:    oklch(0.96 0.005 255 / 0.10);
+  --tenant-accent:      oklch(0.75 0.015 255);
+  --tenant-accent-ink:  oklch(0.13 0.022 255);
   background: var(--brand-bg);
   color: var(--brand-text);
   min-height: 100vh;
