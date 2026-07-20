@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CatalogoRouteImport } from './routes/catalogo'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTenantSlugRouteImport } from './routes/demo.$tenantSlug'
 import { Route as CursoCourseSlugRouteImport } from './routes/curso.$courseSlug'
 import { Route as AuthenticatedEmpresaRouteImport } from './routes/_authenticated.empresa'
@@ -30,6 +31,11 @@ const CatalogoRoute = CatalogoRouteImport.update({
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoTenantSlugRoute = DemoTenantSlugRouteImport.update({
@@ -60,7 +66,7 @@ const AuthenticatedCursoCourseSlugAprenderRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedRouteWithChildren
+  '/': typeof IndexRoute
   '/catalogo': typeof CatalogoRoute
   '/login': typeof LoginRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -70,7 +76,7 @@ export interface FileRoutesByFullPath {
   '/curso/$courseSlug/aprender': typeof AuthenticatedCursoCourseSlugAprenderRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof AuthenticatedRouteWithChildren
+  '/': typeof IndexRoute
   '/catalogo': typeof CatalogoRoute
   '/login': typeof LoginRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -81,6 +87,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/catalogo': typeof CatalogoRoute
   '/login': typeof LoginRoute
@@ -113,6 +120,7 @@ export interface FileRouteTypes {
     | '/curso/$courseSlug/aprender'
   id:
     | '__root__'
+    | '/'
     | '/_authenticated'
     | '/catalogo'
     | '/login'
@@ -124,6 +132,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   CatalogoRoute: typeof CatalogoRoute
   LoginRoute: typeof LoginRoute
@@ -152,6 +161,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/$tenantSlug': {
@@ -210,6 +226,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   CatalogoRoute: CatalogoRoute,
   LoginRoute: LoginRoute,

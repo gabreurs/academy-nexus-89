@@ -17,7 +17,7 @@ export const Route = createFileRoute("/")({ ssr: false, component: LandingPage }
 type Course = {
   id: string; slug: string; title: string; subtitle: string | null;
   cover_url: string | null; instructor_name: string | null;
-  duration_minutes: number | null; category: string | null;
+  duration_minutes: number | null;
 };
 
 const TOPICS = [
