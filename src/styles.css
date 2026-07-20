@@ -242,7 +242,7 @@ html.lenis, html.lenis body { height: auto; }
 
 /* ============================================================
    PLAYER SHELL — área do aluno.
-   Aplicado em rotas /inicio e /curso/**/aprender via className.
+   Aplicado em rotas /inicio e /curso/(slug)/aprender via className.
    Fundo / superfícies / tipografia FIXOS para todos os tenants.
    O ÚNICO respiro de marca é --tenant-accent (herda do branding).
    ============================================================ */
