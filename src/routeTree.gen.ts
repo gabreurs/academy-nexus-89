@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTenantSlugRouteImport } from './routes/demo.$tenantSlug'
 import { Route as CursoCourseSlugRouteImport } from './routes/curso.$courseSlug'
+import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated.inicio'
 import { Route as AuthenticatedEmpresaRouteImport } from './routes/_authenticated.empresa'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as AuthenticatedCursoCourseSlugAprenderRouteImport } from './routes/_authenticated.curso_.$courseSlug.aprender'
@@ -48,6 +49,11 @@ const CursoCourseSlugRoute = CursoCourseSlugRouteImport.update({
   path: '/curso/$courseSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedInicioRoute = AuthenticatedInicioRouteImport.update({
+  id: '/inicio',
+  path: '/inicio',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedEmpresaRoute = AuthenticatedEmpresaRouteImport.update({
   id: '/empresa',
   path: '/empresa',
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/empresa': typeof AuthenticatedEmpresaRoute
+  '/inicio': typeof AuthenticatedInicioRoute
   '/curso/$courseSlug': typeof CursoCourseSlugRoute
   '/demo/$tenantSlug': typeof DemoTenantSlugRoute
   '/curso/$courseSlug/aprender': typeof AuthenticatedCursoCourseSlugAprenderRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/empresa': typeof AuthenticatedEmpresaRoute
+  '/inicio': typeof AuthenticatedInicioRoute
   '/curso/$courseSlug': typeof CursoCourseSlugRoute
   '/demo/$tenantSlug': typeof DemoTenantSlugRoute
   '/curso/$courseSlug/aprender': typeof AuthenticatedCursoCourseSlugAprenderRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/empresa': typeof AuthenticatedEmpresaRoute
+  '/_authenticated/inicio': typeof AuthenticatedInicioRoute
   '/curso/$courseSlug': typeof CursoCourseSlugRoute
   '/demo/$tenantSlug': typeof DemoTenantSlugRoute
   '/_authenticated/curso_/$courseSlug/aprender': typeof AuthenticatedCursoCourseSlugAprenderRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin'
     | '/empresa'
+    | '/inicio'
     | '/curso/$courseSlug'
     | '/demo/$tenantSlug'
     | '/curso/$courseSlug/aprender'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/admin'
     | '/empresa'
+    | '/inicio'
     | '/curso/$courseSlug'
     | '/demo/$tenantSlug'
     | '/curso/$courseSlug/aprender'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_authenticated/admin'
     | '/_authenticated/empresa'
+    | '/_authenticated/inicio'
     | '/curso/$courseSlug'
     | '/demo/$tenantSlug'
     | '/_authenticated/curso_/$courseSlug/aprender'
@@ -184,6 +196,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CursoCourseSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/inicio': {
+      id: '/_authenticated/inicio'
+      path: '/inicio'
+      fullPath: '/inicio'
+      preLoaderRoute: typeof AuthenticatedInicioRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/empresa': {
       id: '/_authenticated/empresa'
       path: '/empresa'
@@ -211,12 +230,14 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedEmpresaRoute: typeof AuthenticatedEmpresaRoute
+  AuthenticatedInicioRoute: typeof AuthenticatedInicioRoute
   AuthenticatedCursoCourseSlugAprenderRoute: typeof AuthenticatedCursoCourseSlugAprenderRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedEmpresaRoute: AuthenticatedEmpresaRoute,
+  AuthenticatedInicioRoute: AuthenticatedInicioRoute,
   AuthenticatedCursoCourseSlugAprenderRoute:
     AuthenticatedCursoCourseSlugAprenderRoute,
 }
@@ -236,3 +257,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
