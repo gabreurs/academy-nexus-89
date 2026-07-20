@@ -45,15 +45,28 @@ function Home() {
   const renderCard = (c: any) => {
     const p = progress[c.id];
     return (
-      <Link key={c.id} to="/curso/$courseSlug" params={{ courseSlug: c.slug }}
-        className="brand-surface rounded-xl overflow-hidden border brand-border hover:border-white/20">
-        <div className="aspect-video brand-surface-2 flex items-center justify-center opacity-40 text-4xl">▶</div>
-        <div className="p-4">
-          <h3 className="font-medium">{c.title}</h3>
-          <div className="mt-3 h-1.5 rounded-full brand-surface-2 overflow-hidden">
-            <div className="h-full brand-btn" style={{ width: `${p?.percent ?? 0}%` }} />
+      <Link
+        key={c.id}
+        to="/curso/$courseSlug"
+        params={{ courseSlug: c.slug }}
+        className="group rounded-2xl overflow-hidden border player-border player-surface hover:-translate-y-0.5 transition"
+      >
+        <div className="aspect-video player-surface-2 relative overflow-hidden">
+          {c.cover_url ? (
+            <img src={c.cover_url} alt={c.title} className="w-full h-full object-cover" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center opacity-30 text-5xl">▶</div>
+          )}
+        </div>
+        <div className="p-5">
+          <h3 className="font-display text-base">{c.title}</h3>
+          <div className="mt-4 h-1 rounded-full player-surface-2 overflow-hidden">
+            <div
+              className="h-full transition-all"
+              style={{ width: `${p?.percent ?? 0}%`, background: "var(--tenant-accent)" }}
+            />
           </div>
-          <p className="mt-2 text-xs brand-text-muted">{p?.percent ?? 0}% concluído</p>
+          <p className="mt-2 text-xs player-muted">{p?.percent ?? 0}% concluído</p>
         </div>
       </Link>
     );
