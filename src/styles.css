@@ -34,15 +34,23 @@
 :root {
   --radius: 1.1rem;
 
-  --brand-primary:   #111827;
-  --brand-secondary: #0F172A;
-  --brand-accent:    #4F46E5;
-  --brand-bg:        #F7F5F2;
-  --brand-surface:   #FFFFFF;
-  --brand-surface-2: #EFEAE3;
-  --brand-text:      #111827;
-  --brand-muted:     #6B7280;
-  --brand-border:    rgba(17, 24, 39, 0.10);
+  /* OKLCH reais extraídos de gabreurs/sindicolab-hub (src/styles.css) */
+  --brand-primary:   oklch(0.13 0.022 255);   /* ink */
+  --brand-secondary: oklch(0.16 0.022 255);   /* foreground */
+  --brand-accent:    oklch(0.55 0.21 258);    /* brand */
+  --brand-accent-deep: oklch(0.4 0.2 262);    /* brand-deep */
+  --brand-soft:      oklch(0.93 0.05 255);    /* brand-soft */
+  --violet:          oklch(0.55 0.22 295);
+  --violet-deep:     oklch(0.32 0.16 290);
+  --cyan:            oklch(0.78 0.14 220);
+  --cyan-soft:       oklch(0.93 0.05 220);
+  --brand-bg:        oklch(0.985 0.003 240);  /* background */
+  --brand-surface:   oklch(1 0 0);            /* surface-elevated / card */
+  --brand-surface-2: oklch(0.97 0.005 240);   /* surface */
+  --brand-text:      oklch(0.13 0.022 255);   /* ink */
+  --brand-muted:     oklch(0.45 0.018 255);   /* ink-soft */
+  --brand-border:    oklch(0.9 0.008 245);    /* border */
+  --shadow-brand:    0 16px 50px oklch(0.5 0.2 262 / 0.32);
 
   /* Ponte semântica: acento do tenant, herda do branding.
      No player escuro é a ÚNICA cor de marca que sobrevive. */
