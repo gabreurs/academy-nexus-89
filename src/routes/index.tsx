@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/lib/tenant/TenantProvider";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { SiteHeader } from "@/components/site/SiteHeader";
@@ -7,47 +8,56 @@ import { TenantDemoSwitcher } from "@/components/site/TenantDemoSwitcher";
 import { Reveal } from "@/components/motion/Reveal";
 import { CursorGlow } from "@/components/motion/CursorGlow";
 
-// Lenis + framer só nas rotas de marketing → dynamic import
 const SmoothScroll = lazy(() =>
   import("@/components/motion/SmoothScroll").then((m) => ({ default: m.SmoothScroll })),
 );
 
-export const Route = createFileRoute("/")({
-  ssr: false,
-  component: LandingPage,
-});
+export const Route = createFileRoute("/")({ ssr: false, component: LandingPage });
 
-const PILLARS = [
-  {
-    kicker: "01 — Multi-tenant real",
-    title: "White label profundo",
-    body: "Cada organização com sua marca, domínio, catálogo e assentos — sobre um único produto compartilhado.",
-  },
-  {
-    kicker: "02 — Trilhas condominiais",
-    title: "Formação por função",
-    body: "Conteúdo prático para porteiros, síndicos, administradoras e equipes de atendimento — modular e certificável.",
-  },
-  {
-    kicker: "03 — Streaming-first",
-    title: "Consumo sem atrito",
-    body: "Player Vimeo com progresso persistente, comentários e reviews. Continua de onde parou, em qualquer aparelho.",
-  },
+type Course = {
+  id: string; slug: string; title: string; subtitle: string | null;
+  cover_url: string | null; instructor_name: string | null;
+  duration_minutes: number | null;
+};
+
+const TOPICS = [
+  { k: "Gestão condominial", d: "Rotinas do síndico, assembleias, prestação de contas." },
+  { k: "Portaria & atendimento", d: "Recepção, controle de acesso, comunicação com moradores." },
+  { k: "Manutenção predial", d: "Elevadores, hidráulica, elétrica, prevenção." },
+  { k: "Jurídico & compliance", d: "Convenção, regimento, LGPD, boas práticas." },
 ];
 
 function LandingPage() {
   const { tenant, loading } = useTenant();
   const { session } = useAuth();
+  const [featured, setFeatured] = useState<Course[]>([]);
+
+  useEffect(() => {
+    if (!tenant) return;
+    (async () => {
+      const { data: cat } = await supabase
+        .from("organization_course_catalog")
+        .select("course_id")
+        .eq("organization_id", tenant.organization.id)
+        .eq("is_visible", true);
+      const ids = (cat ?? []).map((c: any) => c.course_id);
+      if (!ids.length) { setFeatured([]); return; }
+      const { data } = await supabase.from("courses")
+        .select("*").in("id", ids).eq("status", "published").limit(6);
+      setFeatured((data as Course[]) ?? []);
+    })();
+  }, [tenant?.organization.id]);
 
   if (loading) return <FullScreenLoading />;
 
   const orgName = tenant?.organization.name ?? "SíndicoLab";
-  const envName = tenant?.branding?.environment_name ?? "SíndicoLab Academy";
+  const envName = tenant?.branding?.environment_name ?? "Portal de conhecimento condominial";
   const welcomeTitle =
-    tenant?.branding?.welcome_title ?? "Educação para o mercado condominial";
+    tenant?.branding?.welcome_title ??
+    "Conhecimento vivo para quem faz o condomínio funcionar.";
   const welcomeMsg =
     tenant?.branding?.welcome_message ??
-    "Formação contínua para administradoras, síndicos, porteiros e equipes condominiais — em um único ecossistema.";
+    "Trilhas, aulas e materiais produzidos para síndicos, porteiros, zeladores e equipes de administradora — atualizados constantemente pela curadoria.";
 
   return (
     <>
@@ -55,7 +65,7 @@ function LandingPage() {
       <div style={{ background: "var(--brand-bg)", color: "var(--brand-text)" }}>
         <SiteHeader />
 
-        {/* HERO editorial */}
+        {/* HERO — portal editorial, sem copy comercial */}
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 pattern-grid pointer-events-none opacity-70" />
           <div
@@ -76,11 +86,10 @@ function LandingPage() {
 
             <Reveal delay={80}>
               <h1
-                className="mt-6 font-editorial text-[clamp(2.8rem,6.4vw,5.6rem)] text-balance max-w-5xl"
+                className="mt-6 font-editorial text-[clamp(2.6rem,6.2vw,5.4rem)] text-balance max-w-5xl"
                 style={{ color: "var(--brand-text)" }}
               >
-                {welcomeTitle}{" "}
-                <span className="text-gradient-lab">sem intermediário.</span>
+                {welcomeTitle}
               </h1>
             </Reveal>
 
@@ -92,70 +101,101 @@ function LandingPage() {
 
             <Reveal delay={220}>
               <div className="mt-10 flex flex-wrap items-center gap-3">
-                <Link to="/catalogo" className="btn-primary">
-                  Ver catálogo <span className="btn-arrow">→</span>
-                </Link>
                 {session ? (
-                  <Link to="/inicio" className="btn-ghost">
-                    Ir para minha área <span className="btn-arrow">→</span>
+                  <Link to="/inicio" className="btn-primary">
+                    Continuar assistindo <span className="btn-arrow">→</span>
                   </Link>
                 ) : (
-                  <Link to="/login" className="btn-ghost">
-                    Entrar <span className="btn-arrow">→</span>
+                  <Link to="/login" className="btn-primary">
+                    Acessar a plataforma <span className="btn-arrow">→</span>
                   </Link>
                 )}
+                <Link to="/catalogo" className="btn-ghost">
+                  Ver catálogo <span className="btn-arrow">→</span>
+                </Link>
               </div>
-            </Reveal>
-
-            <Reveal delay={320}>
-              <dl className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl">
-                {[
-                  ["+12", "Cursos ativos"],
-                  ["3", "Empresas na rede"],
-                  ["98%", "Taxa de conclusão"],
-                  ["24/7", "Streaming"],
-                ].map(([k, v]) => (
-                  <div key={v}>
-                    <dt className="font-editorial text-3xl md:text-4xl" style={{ color: "var(--brand-text)" }}>{k}</dt>
-                    <dd className="mt-2 text-xs uppercase tracking-widest brand-text-muted">{v}</dd>
-                  </div>
-                ))}
-              </dl>
             </Reveal>
           </div>
         </section>
 
-        {/* PILARES */}
+        {/* EM DESTAQUE — capas reais do catálogo do tenant */}
+        {featured.length > 0 && (
+          <section className="border-t" style={{ borderColor: "var(--brand-border)" }}>
+            <div className="container-x py-20 md:py-24">
+              <div className="flex items-end justify-between gap-6 flex-wrap">
+                <Reveal>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] brand-text-muted">Em destaque</p>
+                    <h2 className="mt-3 font-editorial text-3xl md:text-4xl max-w-2xl text-balance">
+                      Conteúdo publicado no acervo de {orgName}
+                    </h2>
+                  </div>
+                </Reveal>
+                <Link to="/catalogo" className="text-sm brand-text-muted hover:opacity-80">
+                  Ver catálogo completo →
+                </Link>
+              </div>
+              <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {featured.map((c, i) => (
+                  <Reveal key={c.id} delay={i * 60}>
+                    <CursorGlow className="h-full rounded-3xl overflow-hidden">
+                      <Link
+                        to="/curso/$courseSlug"
+                        params={{ courseSlug: c.slug }}
+                        className="block h-full border rounded-3xl overflow-hidden transition hover:-translate-y-0.5"
+                        style={{ background: "var(--brand-surface)", borderColor: "var(--brand-border)" }}
+                      >
+                        <div className="aspect-video relative overflow-hidden" style={{ background: "var(--brand-surface-2)" }}>
+                          {c.cover_url ? (
+                            <img src={c.cover_url} alt={c.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center opacity-30 text-5xl">▶</div>
+                          )}
+                        </div>
+                        <div className="p-6">
+                          <h3 className="font-display text-lg leading-snug">{c.title}</h3>
+                          {c.subtitle && (
+                            <p className="mt-2 text-sm brand-text-muted line-clamp-2">{c.subtitle}</p>
+                          )}
+                          <div className="mt-5 flex items-center gap-3 text-[11px] uppercase tracking-widest brand-text-muted">
+                            {c.instructor_name && <span>{c.instructor_name}</span>}
+                            {c.duration_minutes && <span>· {Math.round(c.duration_minutes / 60)}h</span>}
+                          </div>
+                        </div>
+                      </Link>
+                    </CursorGlow>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* TÓPICOS — o que se aprende aqui */}
         <section className="border-t" style={{ borderColor: "var(--brand-border)" }}>
-          <div className="container-x py-20 md:py-28">
+          <div className="container-x py-20 md:py-24">
             <Reveal>
-              <p className="text-xs uppercase tracking-[0.22em] brand-text-muted">O que a Academy entrega</p>
+              <p className="text-xs uppercase tracking-[0.22em] brand-text-muted">O que você aprende</p>
             </Reveal>
             <Reveal delay={80}>
               <h2 className="mt-4 font-editorial text-4xl md:text-5xl max-w-3xl text-balance">
-                Um <span className="text-gradient-lab">ecossistema editorial</span>{" "}
-                para formar quem mantém o condomínio de pé.
+                Formação prática, do dia a dia da <span className="text-gradient-lab">portaria à assembleia</span>.
               </h2>
             </Reveal>
-
-            <div className="mt-14 grid gap-6 md:grid-cols-3">
-              {PILLARS.map((p, i) => (
-                <Reveal key={p.title} delay={i * 90}>
-                  <CursorGlow
-                    className="h-full rounded-3xl p-8 border transition"
-                  >
+            <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {TOPICS.map((t, i) => (
+                <Reveal key={t.k} delay={i * 70}>
+                  <CursorGlow className="h-full rounded-3xl">
                     <div
-                      className="rounded-3xl h-full"
+                      className="rounded-3xl p-6 h-full border"
                       style={{ background: "var(--brand-surface)", borderColor: "var(--brand-border)" }}
                     >
                       <div
-                        className="rounded-3xl p-8 h-full border"
-                        style={{ borderColor: "var(--brand-border)", background: "var(--brand-surface)" }}
-                      >
-                        <p className="text-[11px] uppercase tracking-[0.22em] brand-text-muted">{p.kicker}</p>
-                        <h3 className="mt-4 font-display text-2xl" style={{ color: "var(--brand-text)" }}>{p.title}</h3>
-                        <p className="mt-3 text-sm leading-relaxed brand-text-muted">{p.body}</p>
-                      </div>
+                        className="h-8 w-8 rounded-full mb-5"
+                        style={{ background: "var(--gradient-lab)" }}
+                      />
+                      <h3 className="font-display text-base">{t.k}</h3>
+                      <p className="mt-2 text-sm brand-text-muted leading-relaxed">{t.d}</p>
                     </div>
                   </CursorGlow>
                 </Reveal>
@@ -164,58 +204,22 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* MARQUEE — assinatura editorial */}
+        {/* MARQUEE editorial */}
         <section className="border-t overflow-hidden" style={{ borderColor: "var(--brand-border)" }}>
           <div className="py-10 flex whitespace-nowrap animate-marquee">
             {Array.from({ length: 2 }).map((_, i) => (
               <div key={i} className="flex items-center gap-14 pr-14 font-editorial text-4xl md:text-6xl">
-                <span>{orgName}</span><span className="text-gradient-lab">Academy</span>
-                <span>white label</span><span className="text-gradient-lab">multi-tenant</span>
-                <span>streaming</span><span className="text-gradient-lab">editorial</span>
-                <span>Studio Marqo</span>
+                <span>síndicos</span><span className="text-gradient-lab">porteiros</span>
+                <span>zeladores</span><span className="text-gradient-lab">administradoras</span>
+                <span>conselheiros</span><span className="text-gradient-lab">gestores</span>
               </div>
             ))}
           </div>
         </section>
 
-        {/* CTA final */}
-        <section className="border-t" style={{ borderColor: "var(--brand-border)" }}>
-          <div className="container-x py-20 md:py-28">
-            <div
-              className="rounded-3xl p-10 md:p-16 relative overflow-hidden border"
-              style={{ background: "var(--brand-surface)", borderColor: "var(--brand-border)" }}
-            >
-              <div
-                aria-hidden
-                className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full opacity-50"
-                style={{ background: "var(--gradient-lab)", filter: "blur(100px)" }}
-              />
-              <Reveal>
-                <p className="text-xs uppercase tracking-[0.22em] brand-text-muted">Comece agora</p>
-              </Reveal>
-              <Reveal delay={80}>
-                <h2 className="mt-4 font-editorial text-4xl md:text-5xl max-w-2xl text-balance">
-                  Ative a Academy da sua administradora em minutos.
-                </h2>
-              </Reveal>
-              <Reveal delay={160}>
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <Link to="/catalogo" className="btn-primary">
-                    Explorar catálogo <span className="btn-arrow">→</span>
-                  </Link>
-                  <Link to="/login" className="btn-ghost">
-                    {session ? "Entrar na minha área" : "Criar conta"} <span className="btn-arrow">→</span>
-                  </Link>
-                </div>
-              </Reveal>
-            </div>
-          </div>
-        </section>
-
-        {/* Footer minimal */}
         <footer className="border-t" style={{ borderColor: "var(--brand-border)" }}>
           <div className="container-x py-10 flex flex-wrap items-center justify-between gap-4 text-sm brand-text-muted">
-            <span>© {new Date().getFullYear()} {orgName}. Academy powered by SíndicoLab.</span>
+            <span>© {new Date().getFullYear()} {orgName}. Powered by SíndicoLab.</span>
             <span className="font-mono text-[11px] uppercase tracking-widest">v0.1 · MVP demo</span>
           </div>
         </footer>
