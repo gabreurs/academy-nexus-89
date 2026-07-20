@@ -72,22 +72,44 @@ function Home() {
     );
   };
 
+  const firstName = session?.user?.email?.split("@")[0] ?? "aluno";
   return (
-    <div className="min-h-screen">
+    <div className="player-shell">
       <SiteHeader />
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        <h1 className="text-3xl font-semibold tracking-tight">Olá 👋</h1>
-        <p className="brand-text-muted mt-1">Continue de onde parou ou explore seu catálogo.</p>
-        <h2 className="mt-10 text-xl font-medium">Seu catálogo</h2>
-        <div className="mt-4 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <section className="player-hero">
+        <div className="container-x pt-14 pb-16 md:pt-20 md:pb-24">
+          <p className="text-[11px] uppercase tracking-[0.24em] player-muted">Minha área</p>
+          <h1 className="mt-4 font-editorial text-4xl md:text-5xl text-balance max-w-3xl">
+            Continue de onde parou, <span className="player-accent">{firstName}</span>.
+          </h1>
+          <p className="mt-4 max-w-xl player-muted">
+            Todos os cursos disponíveis para <strong>{tenant?.organization.name}</strong>{" "}
+            reunidos em um único palco de consumo.
+          </p>
+        </div>
+      </section>
+
+      <main className="container-x pb-24">
+        <div className="flex items-baseline justify-between mt-4">
+          <h2 className="font-display text-xl">Seu catálogo</h2>
+          <span className="text-xs uppercase tracking-widest player-muted">{items.length} títulos</span>
+        </div>
+        <div className="mt-5 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {items.map(renderCard)}
-          {items.length === 0 && <p className="brand-text-muted">Nenhum curso liberado ainda.</p>}
+          {items.length === 0 && (
+            <p className="player-muted">Nenhum curso liberado ainda para sua organização.</p>
+          )}
         </div>
         {purchased.length > 0 && (
           <>
-            <h2 className="mt-12 text-xl font-medium">Meus cursos comprados</h2>
-            <p className="brand-text-muted mt-1 text-sm">Acessos concedidos via checkout externo.</p>
-            <div className="mt-4 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-16 flex items-baseline justify-between">
+              <h2 className="font-display text-xl">Meus cursos comprados</h2>
+              <span className="text-xs uppercase tracking-widest player-muted">acesso avulso</span>
+            </div>
+            <p className="mt-1 text-sm player-muted">
+              Acessos concedidos por compra direta via checkout externo.
+            </p>
+            <div className="mt-5 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {purchased.map(renderCard)}
             </div>
           </>
