@@ -25,14 +25,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_evt, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_evt, s) => {
       setSession(s);
-      if (s?.user) loadMemberships(s.user.id); else setMemberships([]);
+      setLoading(true);
+      if (s?.user) {
+        await loadMemberships(s.user.id);
+      } else {
+        setMemberships([]);
+      }
+      setLoading(false);
     });
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session);
-      if (data.session?.user) loadMemberships(data.session.user.id).finally(() => setLoading(false));
-      else setLoading(false);
+      if (data.session?.user) {
+        await loadMemberships(data.session.user.id);
+      }
+      setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
