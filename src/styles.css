@@ -287,6 +287,11 @@ html.lenis, html.lenis body { height: auto; }
 .player-shell > header button { color: var(--player-ink) !important; }
 .player-shell > header .brand-text-muted { color: var(--player-ink-soft) !important; }
 
+/* Swap de logos: padrão = fundo claro (ink). Player-shell = fundo escuro (white). */
+.logo-on-dark { display: none; }
+.player-shell .logo-on-light { display: none; }
+.player-shell .logo-on-dark  { display: inline-block; }
+
 /* Hero do player (inspirado no /play do institucional) */
 .player-hero {
   position: relative;
