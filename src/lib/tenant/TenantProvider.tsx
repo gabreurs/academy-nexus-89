@@ -56,13 +56,10 @@ async function loadTenant(slugOrHost: { slug?: string | null; hostname?: string 
     if (data) return await hydrate(data);
   }
   if (slugOrHost.hostname) {
-    const { data: dom } = await supabase
-      .from("organization_domains")
-      .select("organization_id, organizations(*)")
-      .eq("hostname", slugOrHost.hostname)
+    const { data: org } = await supabase
+      .rpc("resolve_tenant_by_hostname", { p_hostname: slugOrHost.hostname })
       .maybeSingle();
-    if (dom && (dom as any).organizations) return await hydrate((dom as any).organizations);
-    orgId = dom?.organization_id ?? null;
+    if (org) return await hydrate(org);
   }
   if (!orgId) {
     // Fallback: SíndicoLab
