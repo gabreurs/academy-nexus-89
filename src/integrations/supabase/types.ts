@@ -903,6 +903,19 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
+      resolve_tenant_by_hostname: {
+        Args: { p_hostname: string }
+        Returns: {
+          created_at: string
+          id: string
+          is_platform: boolean
+          name: string
+          slug: string
+          status: Database["public"]["Enums"]["org_status"]
+          updated_at: string
+          user_limit: number
+        }[]
+      }
       user_org_ids: { Args: { _user_id: string }; Returns: string[] }
     }
     Enums: {
