@@ -84,10 +84,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "SíndicoLab Academy — Educação para o mercado condominial" },
       { name: "description", content: "Plataforma educacional white label do SíndicoLab: cursos, trilhas e formação contínua para administradoras, síndicos, porteiros e equipes condominiais." },
       { name: "author", content: "SíndicoLab" },
-      { property: "og:title", content: "SíndicoLab Academy" },
-      { property: "og:description", content: "Academia digital corporativa especializada no mercado condominial brasileiro." },
+      { property: "og:title", content: "SíndicoLab Academy — Educação para o mercado condominial" },
+      { property: "og:description", content: "Plataforma educacional white label do SíndicoLab: cursos, trilhas e formação contínua para administradoras, síndicos, porteiros e equipes condominiais." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "SíndicoLab Academy — Educação para o mercado condominial" },
+      { name: "twitter:description", content: "Plataforma educacional white label do SíndicoLab: cursos, trilhas e formação contínua para administradoras, síndicos, porteiros e equipes condominiais." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f3e387f6-3f1d-4e09-a9d3-daddb95fa4db/id-preview-59b62b78--8c7f2af3-c481-4200-8590-2a0402de11b7.lovable.app-1784915646088.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/f3e387f6-3f1d-4e09-a9d3-daddb95fa4db/id-preview-59b62b78--8c7f2af3-c481-4200-8590-2a0402de11b7.lovable.app-1784915646088.png" },
     ],
     links: [
       {
