@@ -72,6 +72,7 @@ function Player() {
   const currentIndex = flatLessons.findIndex((l: any) => l.id === currentLessonId);
   const current = flatLessons[currentIndex];
   const [startAt, setStartAt] = useState(0);
+  const isInteractive = !!current?.video_url && !/vimeo\.com/i.test(current.video_url);
 
   useEffect(() => {
     lastPositionRef.current = 0;
