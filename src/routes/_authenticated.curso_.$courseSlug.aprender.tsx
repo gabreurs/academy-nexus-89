@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_authenticated/curso_/$courseSlug/aprende
 
 function Player() {
   const { courseSlug } = useParams({ from: "/_authenticated/curso_/$courseSlug/aprender" });
-  const { session, isPlatformAdmin } = useAuth();
+  const { session, isPlatformAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [course, setCourse] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
@@ -20,6 +20,7 @@ function Player() {
 
   useEffect(() => {
     (async () => {
+      if (authLoading) return;
       const { data: c } = await supabase.from("courses").select("*").eq("slug", courseSlug).maybeSingle();
       if (!c) { setAccessChecked(true); setDenied(true); return; }
       setCourse(c);
@@ -62,7 +63,7 @@ function Player() {
       const firstLesson = ((mods as any[]) ?? [])[0]?.course_lessons?.sort((a: any, b: any) => a.sort_order - b.sort_order)?.[0]?.id;
       setCurrentLessonId(cp?.last_lesson_id ?? firstLesson ?? null);
     })();
-  }, [courseSlug, session?.user?.id, isPlatformAdmin]);
+  }, [courseSlug, session?.user?.id, isPlatformAdmin, authLoading]);
 
   const flatLessons = useMemo(
     () => modules.flatMap((m) => (m.course_lessons ?? []).sort((a: any, b: any) => a.sort_order - b.sort_order)),
