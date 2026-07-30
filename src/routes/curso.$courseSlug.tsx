@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { TenantDemoSwitcher } from "@/components/site/TenantDemoSwitcher";
 import { CourseReviews } from "@/components/course/CourseReviews";
+import { LessonMedia } from "@/components/player/LessonMedia";
 
 export const Route = createFileRoute("/curso/$courseSlug")({ ssr: false, component: CoursePage });
 
@@ -17,6 +18,7 @@ function CoursePage() {
   const [inCatalog, setInCatalog] = useState(false);
   const [loading, setLoading] = useState(true);
   const [enrollError, setEnrollError] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -67,7 +69,32 @@ function CoursePage() {
       <SiteHeader />
       <main className="mx-auto max-w-6xl px-6 py-10 grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <div className="aspect-video brand-surface rounded-xl overflow-hidden flex items-center justify-center opacity-60 text-5xl">▶</div>
+          {(() => {
+            const preview = modules
+              .flatMap((m: any) => m.course_lessons ?? [])
+              .find((l: any) => l.is_preview && l.video_url);
+            if (!preview) {
+              return (
+                <div className="aspect-video brand-surface rounded-xl overflow-hidden flex items-center justify-center opacity-60 text-5xl">▶</div>
+              );
+            }
+            if (!showPreview) {
+              return (
+                <button
+                  onClick={() => setShowPreview(true)}
+                  className="aspect-video w-full brand-surface rounded-xl overflow-hidden flex flex-col items-center justify-center gap-2 border brand-border hover:opacity-90 transition"
+                >
+                  <span className="text-4xl">▶</span>
+                  <span className="text-sm brand-text-muted">Assistir prévia da aula</span>
+                </button>
+              );
+            }
+            return (
+              <div className="w-full h-[70vh] min-h-[440px] brand-surface rounded-xl overflow-hidden border brand-border">
+                <LessonMedia videoUrl={preview.video_url} />
+              </div>
+            );
+          })()}
           <h1 className="mt-6 text-3xl font-semibold tracking-tight">{course.title}</h1>
           {course.subtitle && <p className="brand-text-muted mt-1">{course.subtitle}</p>}
           <p className="mt-6 leading-relaxed">{course.description}</p>

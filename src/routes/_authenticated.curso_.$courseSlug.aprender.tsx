@@ -2,14 +2,14 @@ import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-r
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { VimeoPlayer } from "@/components/player/VimeoPlayer";
+import { LessonMedia } from "@/components/player/LessonMedia";
 import { LessonComments } from "@/components/course/LessonComments";
 
 export const Route = createFileRoute("/_authenticated/curso_/$courseSlug/aprender")({ ssr: false, component: Player });
 
 function Player() {
   const { courseSlug } = useParams({ from: "/_authenticated/curso_/$courseSlug/aprender" });
-  const { session, isPlatformAdmin } = useAuth();
+  const { session, isPlatformAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [course, setCourse] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
@@ -20,6 +20,7 @@ function Player() {
 
   useEffect(() => {
     (async () => {
+      if (authLoading) return;
       const { data: c } = await supabase.from("courses").select("*").eq("slug", courseSlug).maybeSingle();
       if (!c) { setAccessChecked(true); setDenied(true); return; }
       setCourse(c);
@@ -62,7 +63,7 @@ function Player() {
       const firstLesson = ((mods as any[]) ?? [])[0]?.course_lessons?.sort((a: any, b: any) => a.sort_order - b.sort_order)?.[0]?.id;
       setCurrentLessonId(cp?.last_lesson_id ?? firstLesson ?? null);
     })();
-  }, [courseSlug, session?.user?.id, isPlatformAdmin]);
+  }, [courseSlug, session?.user?.id, isPlatformAdmin, authLoading]);
 
   const flatLessons = useMemo(
     () => modules.flatMap((m) => (m.course_lessons ?? []).sort((a: any, b: any) => a.sort_order - b.sort_order)),
@@ -72,6 +73,7 @@ function Player() {
   const currentIndex = flatLessons.findIndex((l: any) => l.id === currentLessonId);
   const current = flatLessons[currentIndex];
   const [startAt, setStartAt] = useState(0);
+  const isInteractive = !!current?.video_url && !/vimeo\.com/i.test(current.video_url);
 
   useEffect(() => {
     lastPositionRef.current = 0;
@@ -114,8 +116,13 @@ function Player() {
         >
           ← {course.title}
         </Link>
-        <div className="mt-4 aspect-video player-surface rounded-2xl overflow-hidden border player-border">
-          <VimeoPlayer
+        <div
+          className={
+            "mt-4 player-surface rounded-2xl overflow-hidden border player-border " +
+            (isInteractive ? "h-[78vh] min-h-[520px]" : "aspect-video")
+          }
+        >
+          <LessonMedia
             videoUrl={current.video_url}
             startAt={startAt}
             onProgress={(sec) => { lastPositionRef.current = sec; upsertProgress({ position: sec }); }}
