@@ -2,7 +2,7 @@ import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-r
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { VimeoPlayer } from "@/components/player/VimeoPlayer";
+import { LessonMedia } from "@/components/player/LessonMedia";
 import { LessonComments } from "@/components/course/LessonComments";
 
 export const Route = createFileRoute("/_authenticated/curso_/$courseSlug/aprender")({ ssr: false, component: Player });
@@ -114,8 +114,13 @@ function Player() {
         >
           ← {course.title}
         </Link>
-        <div className="mt-4 aspect-video player-surface rounded-2xl overflow-hidden border player-border">
-          <VimeoPlayer
+        <div
+          className={
+            "mt-4 player-surface rounded-2xl overflow-hidden border player-border " +
+            (isInteractive ? "h-[78vh] min-h-[520px]" : "aspect-video")
+          }
+        >
+          <LessonMedia
             videoUrl={current.video_url}
             startAt={startAt}
             onProgress={(sec) => { lastPositionRef.current = sec; upsertProgress({ position: sec }); }}
