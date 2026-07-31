@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Player from "@vimeo/player";
 
 type Props = {
@@ -18,6 +18,7 @@ type Props = {
 export function VimeoPlayer({ videoUrl, startAt = 0, onProgress, onEnded, throttleMs = 10000 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastEmitRef = useRef(0);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -28,10 +29,16 @@ export function VimeoPlayer({ videoUrl, startAt = 0, onProgress, onEnded, thrott
     });
 
     let cancelled = false;
-    player.ready().then(() => {
-      if (cancelled) return;
-      if (startAt && startAt > 1) player.setCurrentTime(startAt).catch(() => {});
-    });
+    setFailed(false);
+    player
+      .ready()
+      .then(() => {
+        if (cancelled) return;
+        if (startAt && startAt > 1) player.setCurrentTime(startAt).catch(() => {});
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
 
     const handleTime = (data: { seconds: number }) => {
       if (!onProgress) return;
@@ -59,7 +66,16 @@ export function VimeoPlayer({ videoUrl, startAt = 0, onProgress, onEnded, thrott
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoUrl]);
 
-  return <div ref={containerRef} className="w-full h-full" />;
+  return (
+    <div className="relative w-full h-full">
+      <div ref={containerRef} className="w-full h-full" />
+      {failed && (
+        <div className="absolute inset-0 flex items-center justify-center player-muted text-sm text-center px-6">
+          Vídeo indisponível no momento.
+        </div>
+      )}
+    </div>
+  );
 }
 
 /**
