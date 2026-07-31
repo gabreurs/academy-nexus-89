@@ -85,13 +85,20 @@ function CoursePage() {
                   className="aspect-video w-full brand-surface rounded-xl overflow-hidden flex flex-col items-center justify-center gap-2 border brand-border hover:opacity-90 transition"
                 >
                   <span className="text-4xl">▶</span>
-                  <span className="text-sm brand-text-muted">Assistir prévia da aula</span>
+                  <span className="text-sm brand-text-muted">
+                    {hasAccess ? "Assistir prévia da aula" : "Assistir prévia gratuita (2 min)"}
+                  </span>
                 </button>
               );
             }
             return (
               <div className="w-full h-[70vh] min-h-[440px] brand-surface rounded-xl overflow-hidden border brand-border">
-                <LessonMedia videoUrl={preview.video_url} />
+                <LessonMedia
+                  videoUrl={preview.video_url}
+                  requireStart
+                  title={preview.title}
+                  previewLimitSeconds={hasAccess ? undefined : 120}
+                />
               </div>
             );
           })()}
