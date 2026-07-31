@@ -10,6 +10,10 @@ type Props = {
   requireStart?: boolean;
   /** Título mostrado no cartão de início. */
   title?: string;
+  /** Limita a prévia a N segundos de uso (0/undefined = sem limite). */
+  previewLimitSeconds?: number;
+  /** Callback quando a prévia limitada termina. */
+  onPreviewEnded?: () => void;
 };
 
 function isVimeo(url: string) {
@@ -22,7 +26,7 @@ function isVimeo(url: string) {
  * - Qualquer outro embed (ex.: Learning Studio AI) -> iframe interativo
  *   com rastreio de tempo de permanência na aula.
  */
-export function LessonMedia({ videoUrl, startAt = 0, onProgress, onEnded, requireStart = false, title }: Props) {
+export function LessonMedia({ videoUrl, startAt = 0, onProgress, onEnded, requireStart = false, title, previewLimitSeconds, onPreviewEnded }: Props) {
   if (!videoUrl) {
     return (
       <div className="w-full h-full flex items-center justify-center player-muted text-sm">
@@ -40,6 +44,8 @@ export function LessonMedia({ videoUrl, startAt = 0, onProgress, onEnded, requir
       onProgress={onProgress}
       requireStart={requireStart}
       title={title}
+      previewLimitSeconds={previewLimitSeconds}
+      onPreviewEnded={onPreviewEnded}
       key={videoUrl}
     />
   );
@@ -51,16 +57,31 @@ function InteractiveEmbed({
   onProgress,
   requireStart,
   title,
+  previewLimitSeconds,
+  onPreviewEnded,
 }: {
   url: string;
   startAt: number;
   onProgress?: (s: number) => void;
   requireStart?: boolean;
   title?: string;
+  previewLimitSeconds?: number;
+  onPreviewEnded?: () => void;
 }) {
   const [loaded, setLoaded] = useState(false);
   const [started, setStarted] = useState(!requireStart);
+  const [previewOver, setPreviewOver] = useState(false);
   const elapsedRef = useRef(startAt);
+
+  useEffect(() => {
+    if (!started || !previewLimitSeconds) return;
+    const id = window.setTimeout(() => {
+      setPreviewOver(true);
+      onPreviewEnded?.();
+    }, previewLimitSeconds * 1000);
+    return () => window.clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [started, previewLimitSeconds, url]);
 
   useEffect(() => {
     elapsedRef.current = startAt;
@@ -86,6 +107,18 @@ function InteractiveEmbed({
           {startAt > 0 ? "Continuar de onde você parou" : "Clique para iniciar a aula"}
         </span>
       </button>
+    );
+  }
+
+  if (previewOver) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-center px-6">
+        <span className="text-3xl">🔒</span>
+        <span className="text-base font-display">Prévia encerrada</span>
+        <span className="text-sm player-muted max-w-sm">
+          Você viu uma amostra desta aula. Inicie o curso para assistir do começo, com progresso salvo.
+        </span>
+      </div>
     );
   }
 
