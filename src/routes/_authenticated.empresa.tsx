@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -96,9 +96,7 @@ function EmpresaPage() {
   useEffect(() => { if (orgId) refresh(); }, [orgId]);
 
   if (authLoading) return <Shell><p className="brand-text-muted">Carregando…</p></Shell>;
-  if (!canAccess) {
-    throw redirect({ to: "/inicio" });
-  }
+  if (!canAccess) return <Navigate to="/inicio" />;
   if (!orgId) return <Shell><p className="brand-text-muted">Nenhuma organização vinculada.</p></Shell>;
 
   const activeSeats = members.filter((m) => m.is_active && m.role !== "platform_admin").length;
