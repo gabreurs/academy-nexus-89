@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import type { ResolvedTenant } from "./types";
 
 type Ctx = {
@@ -81,10 +82,11 @@ async function hydrate(org: any): Promise<ResolvedTenant> {
 export function TenantProvider({ children }: { children: ReactNode }) {
   const [tenant, setTenant] = useState<ResolvedTenant | null>(null);
   const [loading, setLoading] = useState(true);
+  const { memberships, loading: authLoading, isPlatformAdmin, session } = useAuth();
 
-  const resolve = async () => {
+  const resolve = async (forcedSlug?: string | null) => {
     setLoading(true);
-    const slug = detectSlugFromEnvironment();
+    const slug = forcedSlug ?? detectSlugFromEnvironment();
     const host = typeof window !== "undefined" ? window.location.hostname : null;
     const t = await loadTenant({ slug, hostname: host });
     setTenant(t);
@@ -93,6 +95,24 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => { resolve(); }, []);
+
+  // Um usuário logado que NÃO é platform_admin nunca deve ficar preso no
+  // white label de outra organização (override antigo salvo no navegador).
+  useEffect(() => {
+    if (authLoading || loading) return;
+    if (!session || isPlatformAdmin) return;
+    const orgId = tenant?.organization?.id ?? null;
+    if (!orgId) return;
+    const belongs = memberships.some((m) => m.organization_id === orgId && m.is_active);
+    if (belongs) return;
+    const ownOrgId = memberships.find((m) => m.is_active)?.organization_id;
+    if (!ownOrgId) return;
+    (async () => {
+      const { data } = await supabase.from("organizations").select("slug").eq("id", ownOrgId).maybeSingle();
+      if (typeof window !== "undefined") window.localStorage.removeItem(OVERRIDE_KEY);
+      await resolve(data?.slug ?? null);
+    })();
+  }, [authLoading, loading, session, isPlatformAdmin, memberships, tenant?.organization?.id]);
 
   const overrideSlug = (slug: string | null) => {
     if (typeof window === "undefined") return;
