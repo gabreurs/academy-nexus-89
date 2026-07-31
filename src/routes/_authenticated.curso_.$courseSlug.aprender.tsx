@@ -125,6 +125,8 @@ function Player() {
           <LessonMedia
             videoUrl={current.video_url}
             startAt={startAt}
+            requireStart
+            title={current.title}
             onProgress={(sec) => { lastPositionRef.current = sec; upsertProgress({ position: sec }); }}
             onEnded={() => upsertProgress({ position: 0, completed: true })}
           />
