@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 type Props = {
   title: string;
   category?: string | null;
@@ -20,7 +22,7 @@ function hash(s: string) {
  * correspondente — nada de logo gigante nem arte genérica. Assim que
  * `cover_url` for preenchido, a imagem real substitui este componente.
  */
-export function CoursePoster({ title, category, tone = "dark", showTitle = true, className }: Props) {
+export const CoursePoster = memo(function CoursePoster({ title, category, tone = "dark", showTitle = true, className }: Props) {
   const h = hash(title);
   const angle = 120 + (h % 90);
   const cx = 20 + (h % 60);
@@ -78,4 +80,4 @@ export function CoursePoster({ title, category, tone = "dark", showTitle = true,
       </div>
     </div>
   );
-}
+});

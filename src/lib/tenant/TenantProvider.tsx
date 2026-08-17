@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import type { ResolvedTenant } from "./types";
@@ -86,47 +86,83 @@ async function hydrate(org: any): Promise<ResolvedTenant> {
 
 export function TenantProvider({ children }: { children: ReactNode }) {
   const [tenant, setTenant] = useState<ResolvedTenant | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { memberships, loading: authLoading, isPlatformAdmin, session } = useAuth();
+  const [resolved, setResolved] = useState(false);
+  // `correcting` cobre a janela em que sabemos que o tenant exibido está
+  // errado para este usuário e ainda estamos trocando. Enquanto isso o gate
+  // NÃO pode avaliar acesso — senão expulsa um usuário legítimo.
+  const [correcting, setCorrecting] = useState(false);
+  const { memberships, ready: authReady, isPlatformAdmin, session } = useAuth();
 
-  const resolve = async (forcedSlug?: string | null) => {
-    setLoading(true);
+  // Só a resolução mais recente escreve estado (evita respostas fora de ordem
+  // e resoluções duplicadas sobrescrevendo o tenant corrigido).
+  const genRef = useRef(0);
+  // Chave da última correção tentada. Mantida em estado (não em ref) porque o
+  // gate precisa saber, já no mesmo render, que uma correção está pendente.
+  const [attemptedKey, setAttemptedKey] = useState<string | null>(null);
+
+  const resolve = useCallback(async (forcedSlug?: string | null) => {
+    const gen = ++genRef.current;
     const slug = forcedSlug ?? detectSlugFromEnvironment();
     const host = typeof window !== "undefined" ? window.location.hostname : null;
     const t = await loadTenant({ slug, hostname: host });
+    if (gen !== genRef.current) return;
     setTenant(t);
     applyBrandingVars(t);
-    setLoading(false);
-  };
+    setResolved(true);
+  }, []);
 
-  useEffect(() => { resolve(); }, []);
+  useEffect(() => { void resolve(); }, [resolve]);
 
   // Um usuário logado que NÃO é platform_admin nunca deve ficar preso no
   // white label de outra organização (override antigo salvo no navegador).
-  useEffect(() => {
-    if (authLoading || loading) return;
-    if (!session || isPlatformAdmin) return;
+  // Calculado no render: fecha a janela em que o gate avaliaria acesso antes
+  // de o efeito de correção começar (causa do logout indevido após login).
+  const mismatch = (() => {
+    if (!authReady || !resolved || !session || isPlatformAdmin) return null;
     const orgId = tenant?.organization?.id ?? null;
-    if (!orgId) return;
-    const belongs = memberships.some((m) => m.organization_id === orgId && m.is_active);
-    if (belongs) return;
+    if (!orgId) return null;
+    if (memberships.some((m) => m.organization_id === orgId && m.is_active)) return null;
     const ownOrgId = memberships.find((m) => m.is_active)?.organization_id;
-    if (!ownOrgId) return;
-    (async () => {
-      const { data } = await supabase.from("organizations").select("slug").eq("id", ownOrgId).maybeSingle();
-      if (typeof window !== "undefined") window.localStorage.removeItem(OVERRIDE_KEY);
-      await resolve(data?.slug ?? null);
-    })();
-  }, [authLoading, loading, session, isPlatformAdmin, memberships, tenant?.organization?.id]);
+    if (!ownOrgId) return null;
+    return { key: `${session.user.id}:${orgId}`, ownOrgId };
+  })();
+  const pendingCorrection = !!mismatch && mismatch.key !== attemptedKey;
 
-  const overrideSlug = (slug: string | null) => {
+  useEffect(() => {
+    if (correcting) return;
+    if (!mismatch) {
+      if (attemptedKey !== null) setAttemptedKey(null);
+      return;
+    }
+    const { key, ownOrgId } = mismatch;
+    if (attemptedKey === key) return;
+    setAttemptedKey(key);
+    setCorrecting(true);
+    (async () => {
+      try {
+        const { data } = await supabase.from("organizations").select("slug").eq("id", ownOrgId).maybeSingle();
+        if (typeof window !== "undefined") window.localStorage.removeItem(OVERRIDE_KEY);
+        await resolve(data?.slug ?? null);
+      } finally {
+        setCorrecting(false);
+      }
+    })();
+  }, [correcting, mismatch?.key, mismatch?.ownOrgId, attemptedKey, resolve]);
+
+  const overrideSlug = useCallback((slug: string | null) => {
     if (typeof window === "undefined") return;
     if (slug) window.localStorage.setItem(OVERRIDE_KEY, slug);
     else window.localStorage.removeItem(OVERRIDE_KEY);
-    resolve();
-  };
+    setAttemptedKey(null);
+    void resolve();
+  }, [resolve]);
 
-  return <TenantContext.Provider value={{ tenant, loading, overrideSlug }}>{children}</TenantContext.Provider>;
+  const value = useMemo(
+    () => ({ tenant, loading: !resolved || correcting || pendingCorrection, overrideSlug }),
+    [tenant, resolved, correcting, pendingCorrection, overrideSlug],
+  );
+
+  return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>;
 }
 
 export function useTenant() { return useContext(TenantContext); }
