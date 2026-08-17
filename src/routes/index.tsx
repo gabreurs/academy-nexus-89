@@ -1,3 +1,4 @@
+import { CoursePoster } from "@/components/course/CoursePoster";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
