@@ -79,9 +79,10 @@ export function LearningStudioWorkspace({
           <button
             onClick={() => setPanelOpen((v) => !v)}
             aria-expanded={panelOpen}
-            className="text-xs px-3 py-1.5 rounded-full player-surface border player-border hover:opacity-90"
+            className="text-xs px-3 py-1.5 rounded-full player-surface border player-border hover:opacity-90 whitespace-nowrap"
           >
-            {panelOpen ? "Ocultar painel" : "Sobre · Materiais · Discussão"}
+            {panelOpen ? "Ocultar painel" : "Painel"}
+            <span className="hidden md:inline">{panelOpen ? "" : " · Materiais · Discussão"}</span>
           </button>
         </div>
       </header>
