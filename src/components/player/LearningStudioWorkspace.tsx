@@ -7,7 +7,7 @@ import { CourseReviews } from "@/components/course/CourseReviews";
 type Course = {
   id: string; slug: string; title: string; subtitle: string | null;
   description: string | null; instructor_name: string | null;
-  level: string | null; embed_url: string | null;
+  level: string | null;
 };
 
 type Material = { id: string; title: string; file_url: string; kind: string | null };

@@ -26,7 +26,15 @@ function CoursePage() {
     (async () => {
       setLoading(true);
       setShowPreview(false);
-      const { data: c } = await supabase.from("courses").select("*").eq("slug", courseSlug).maybeSingle();
+      // Projeção explícita: apenas metadados públicos. Nada de `select("*")`,
+      // que voltaria a arrastar campos de entrega para o visitante.
+      const { data: c } = await supabase
+        .from("courses")
+        .select(
+          "id, slug, title, subtitle, description, cover_url, banner_url, instructor_name, instructor_bio, category_id, level, duration_minutes, status, visibility, owner_org_id, is_featured, is_required, external_checkout_url, delivery_type",
+        )
+        .eq("slug", courseSlug)
+        .maybeSingle();
       if (!c) { setLoading(false); return; }
       setCourse(c);
 
@@ -89,6 +97,8 @@ function CoursePage() {
               const preview = modules
                 .flatMap((m: any) => m.course_lessons ?? [])
                 .find((l: any) => l.is_preview && l.video_url);
+              // Nunca usamos o conteúdo completo como "degustação": só entra
+              // aqui a aula explicitamente marcada como prévia.
               if (!preview) {
                 return (
                   <div className="aspect-video brand-surface rounded-xl overflow-hidden flex items-center justify-center opacity-60 text-5xl">▶</div>

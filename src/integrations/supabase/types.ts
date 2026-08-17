@@ -130,6 +130,41 @@ export type Database = {
           },
         ]
       }
+      course_delivery_sources: {
+        Row: {
+          course_id: string
+          created_at: string
+          delivery_type: string
+          embed_url: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          delivery_type?: string
+          embed_url: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          delivery_type?: string
+          embed_url?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_delivery_sources_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: true
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_entitlements: {
         Row: {
           course_id: string
@@ -423,7 +458,6 @@ export type Database = {
           delivery_type: string
           description: string | null
           duration_minutes: number | null
-          embed_url: string | null
           external_checkout_url: string | null
           id: string
           instructor_bio: string | null
@@ -448,7 +482,6 @@ export type Database = {
           delivery_type?: string
           description?: string | null
           duration_minutes?: number | null
-          embed_url?: string | null
           external_checkout_url?: string | null
           id?: string
           instructor_bio?: string | null
@@ -473,7 +506,6 @@ export type Database = {
           delivery_type?: string
           description?: string | null
           duration_minutes?: number | null
-          embed_url?: string | null
           external_checkout_url?: string | null
           id?: string
           instructor_bio?: string | null
@@ -992,6 +1024,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_course: {
+        Args: { _course_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_org_role: {
         Args: {
           _org_id: string
