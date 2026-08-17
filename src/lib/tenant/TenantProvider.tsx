@@ -96,7 +96,9 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   // Só a resolução mais recente escreve estado (evita respostas fora de ordem
   // e resoluções duplicadas sobrescrevendo o tenant corrigido).
   const genRef = useRef(0);
-  const correctedForRef = useRef<string | null>(null);
+  // Chave da última correção tentada. Mantida em estado (não em ref) porque o
+  // gate precisa saber, já no mesmo render, que uma correção está pendente.
+  const [attemptedKey, setAttemptedKey] = useState<string | null>(null);
 
   const resolve = useCallback(async (forcedSlug?: string | null) => {
     const gen = ++genRef.current;
@@ -113,18 +115,28 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   // Um usuário logado que NÃO é platform_admin nunca deve ficar preso no
   // white label de outra organização (override antigo salvo no navegador).
-  useEffect(() => {
-    if (!authReady || !resolved || correcting) return;
-    if (!session || isPlatformAdmin) return;
+  // Calculado no render: fecha a janela em que o gate avaliaria acesso antes
+  // de o efeito de correção começar (causa do logout indevido após login).
+  const mismatch = (() => {
+    if (!authReady || !resolved || !session || isPlatformAdmin) return null;
     const orgId = tenant?.organization?.id ?? null;
-    if (!orgId) return;
-    const belongs = memberships.some((m) => m.organization_id === orgId && m.is_active);
-    if (belongs) { correctedForRef.current = null; return; }
+    if (!orgId) return null;
+    if (memberships.some((m) => m.organization_id === orgId && m.is_active)) return null;
     const ownOrgId = memberships.find((m) => m.is_active)?.organization_id;
-    if (!ownOrgId) return;
-    const key = `${session.user.id}:${orgId}`;
-    if (correctedForRef.current === key) return;
-    correctedForRef.current = key;
+    if (!ownOrgId) return null;
+    return { key: `${session.user.id}:${orgId}`, ownOrgId };
+  })();
+  const pendingCorrection = !!mismatch && mismatch.key !== attemptedKey;
+
+  useEffect(() => {
+    if (correcting) return;
+    if (!mismatch) {
+      if (attemptedKey !== null) setAttemptedKey(null);
+      return;
+    }
+    const { key, ownOrgId } = mismatch;
+    if (attemptedKey === key) return;
+    setAttemptedKey(key);
     setCorrecting(true);
     (async () => {
       try {
@@ -135,19 +147,19 @@ export function TenantProvider({ children }: { children: ReactNode }) {
         setCorrecting(false);
       }
     })();
-  }, [authReady, resolved, correcting, session, isPlatformAdmin, memberships, tenant?.organization?.id, resolve]);
+  }, [correcting, mismatch?.key, mismatch?.ownOrgId, attemptedKey, resolve]);
 
   const overrideSlug = useCallback((slug: string | null) => {
     if (typeof window === "undefined") return;
     if (slug) window.localStorage.setItem(OVERRIDE_KEY, slug);
     else window.localStorage.removeItem(OVERRIDE_KEY);
-    correctedForRef.current = null;
+    setAttemptedKey(null);
     void resolve();
   }, [resolve]);
 
   const value = useMemo(
-    () => ({ tenant, loading: !resolved || correcting, overrideSlug }),
-    [tenant, resolved, correcting, overrideSlug],
+    () => ({ tenant, loading: !resolved || correcting || pendingCorrection, overrideSlug }),
+    [tenant, resolved, correcting, pendingCorrection, overrideSlug],
   );
 
   return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>;
