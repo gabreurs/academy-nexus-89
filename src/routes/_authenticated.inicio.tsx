@@ -97,16 +97,10 @@ function Home() {
   }, [allCourses, progress]);
 
   const featured = useMemo(() => items.filter((c) => c.is_featured), [items]);
-  const required = useMemo(() => items.filter((c) => c.is_required), [items]);
   const newest = useMemo(
     () => [...items].sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? "")).slice(0, 12),
     [items],
   );
-  const orgOwned = useMemo(
-    () => items.filter((c) => c.owner_org_id === tenant?.organization.id),
-    [items, tenant?.organization.id],
-  );
-  const trailers = useMemo(() => allCourses.filter((c) => !!c.trailer_url), [allCourses]);
   const categoryRails = useMemo(
     () =>
       categories

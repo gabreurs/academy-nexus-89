@@ -333,6 +333,9 @@ html.lenis, html.lenis body { height: auto; }
   z-index: 1;
 }
 
+/* Rails fora da viewport não pagam layout/paint (scroll fluido com 25+ cards) */
+.rail-section { content-visibility: auto; contain-intrinsic-size: 340px; }
+
 /* Rail scroller — esconde scrollbar mas mantém funcional */
 .rail-scroller { scrollbar-width: none; }
 .rail-scroller::-webkit-scrollbar { display: none; }
