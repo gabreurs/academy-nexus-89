@@ -68,7 +68,7 @@ export const CourseCard = memo(function CourseCard({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3
-              className="truncate-2 text-[15px] font-semibold leading-snug md:text-[16px]"
+              className="line-clamp-2 text-[15px] font-semibold leading-snug md:text-[16px]"
               style={{ letterSpacing: "-0.02em", color: "#F5F5F5" }}
             >
               {course.title}
