@@ -364,8 +364,8 @@ function Rail({
 }
 
 function RailCard({
-  c, percent, inMyList, onToggleList,
-}: { c: Course; percent: number; inMyList: boolean; onToggleList: (id: string) => void }) {
+  c, percent, inMyList, onToggleList, categoryName,
+}: { c: Course; percent: number; inMyList: boolean; onToggleList: (id: string) => void; categoryName?: string }) {
   return (
     <div className="rail-card snap-start shrink-0 w-[280px] md:w-[340px] rounded-lg overflow-hidden player-surface relative">
       <Link to="/curso/$courseSlug" params={{ courseSlug: c.slug }} className="block">
@@ -373,7 +373,7 @@ function RailCard({
           {c.cover_url ? (
             <img src={c.cover_url} alt={c.title} className="w-full h-full object-cover" />
           ) : (
-            <CoverArt title={c.title} className="absolute inset-0 h-full w-full" />
+            <CoursePoster title={c.title} category={categoryName} className="absolute inset-0 h-full w-full" />
           )}
           {percent > 0 && (
             <div className="absolute inset-x-0 bottom-0 h-1" style={{ background: "rgba(0,0,0,.55)" }}>
