@@ -57,6 +57,9 @@
   --tenant-accent:      var(--brand-accent);
   --tenant-accent-soft: color-mix(in oklab, var(--tenant-accent) 18%, transparent);
   --tenant-accent-ink:  #ffffff;
+  /* Tinta legível sobre o accent. Calculada pelo TenantProvider a partir
+     da luminância real do branding (nunca assumida como branco/preto). */
+  --tenant-accent-contrast: #ffffff;
 
   /* Gradientes institucionais (Studio Marqo / Lab) */
   --gradient-lab: linear-gradient(135deg,
@@ -305,9 +308,8 @@ html.lenis, html.lenis body { height: auto; }
   content: "";
   position: absolute; inset: 0;
   background:
-    radial-gradient(120% 80% at 20% 30%, color-mix(in oklab, var(--tenant-accent) 55%, transparent) 0%, transparent 55%),
-    radial-gradient(90% 70% at 80% 80%, rgba(120, 60, 220, 0.55) 0%, transparent 60%),
-    linear-gradient(160deg, #0b1024 0%, #050710 100%);
+    radial-gradient(120% 80% at 20% 30%, color-mix(in srgb, var(--tenant-accent) 34%, transparent) 0%, transparent 58%),
+    linear-gradient(160deg, #141414 0%, #090909 100%);
 }
 .cover-art::after {
   content: "";
