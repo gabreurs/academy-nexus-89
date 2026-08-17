@@ -31,7 +31,7 @@ function Home() {
   const { tenant } = useTenant();
   const [items, setItems] = useState<Course[]>([]);
   const [purchased, setPurchased] = useState<Course[]>([]);
-  const [progress, setProgress] = useState<Record<string, { percent: number; updated_at?: string }>>({});
+  const [progress, setProgress] = useState<Record<string, { percent: number; updated_at?: string; open_count?: number; last_accessed_at?: string }>>({});
   const [myListIds, setMyListIds] = useState<string[]>(getMyList());
   const [categories, setCategories] = useState<{ id: string; name: string; sort_order: number }[]>([]);
 
@@ -71,8 +71,19 @@ function Home() {
 
   const continueList = useMemo(() => {
     return allCourses
-      .filter((c) => { const p = progress[c.id]?.percent ?? 0; return p > 0 && p < 100; })
-      .sort((a, b) => (progress[b.id]?.updated_at ?? "").localeCompare(progress[a.id]?.updated_at ?? ""));
+      .filter((c) => {
+        const pr = progress[c.id];
+        if (!pr) return false;
+        // Cursos nativos: percentual real. Cursos por embed externo: não temos
+        // progresso interno, então usamos apenas o que sabemos (aberturas).
+        const p = pr.percent ?? 0;
+        if (p >= 100) return false;
+        return p > 0 || (pr.open_count ?? 0) > 0;
+      })
+      .sort((a, b) =>
+        (progress[b.id]?.last_accessed_at ?? progress[b.id]?.updated_at ?? "")
+          .localeCompare(progress[a.id]?.last_accessed_at ?? progress[a.id]?.updated_at ?? ""),
+      );
   }, [allCourses, progress]);
 
   const featured = useMemo(() => items.filter((c) => c.is_featured), [items]);
@@ -128,7 +139,7 @@ function Home() {
 
       <main className="relative z-10 -mt-8 pb-24 space-y-10 md:space-y-12">
         {continueList.length > 0 && (
-          <Rail title="Continue assistindo" items={continueList} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} />
+          <Rail title="Continue estudando" items={continueList} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} />
         )}
         {featured.length > 0 && (
           <Rail title="Em destaque" items={featured} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} />

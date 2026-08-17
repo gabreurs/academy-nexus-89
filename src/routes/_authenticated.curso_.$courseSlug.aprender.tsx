@@ -2,8 +2,10 @@ import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-r
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { resolveCourseAccess } from "@/lib/course/courseAccess";
 import { LessonMedia } from "@/components/player/LessonMedia";
 import { LessonComments } from "@/components/course/LessonComments";
+import { LearningStudioWorkspace } from "@/components/player/LearningStudioWorkspace";
 
 export const Route = createFileRoute("/_authenticated/curso_/$courseSlug/aprender")({ ssr: false, component: Player });
 
@@ -13,6 +15,8 @@ function Player() {
   const navigate = useNavigate();
   const [course, setCourse] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
+  const [materials, setMaterials] = useState<any[]>([]);
+  const [lastAccessedAt, setLastAccessedAt] = useState<string | null>(null);
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
   const [accessChecked, setAccessChecked] = useState(false);
   const [denied, setDenied] = useState(false);
@@ -23,39 +27,43 @@ function Player() {
       if (authLoading) return;
       const { data: c } = await supabase.from("courses").select("*").eq("slug", courseSlug).maybeSingle();
       if (!c) { setAccessChecked(true); setDenied(true); return; }
-      setCourse(c);
 
-      // Access gate: platform_admin bypass; else must have entitlement OR enrollment.
-      // For exclusive courses, also require membership in owner org OR catalog entry in user's org.
-      let allowed = isPlatformAdmin;
-      if (!allowed && session?.user) {
-        const uid = session.user.id;
-        const [{ data: ent }, { data: enr }] = await Promise.all([
-          supabase.from("course_entitlements").select("id").eq("user_id", uid).eq("course_id", c.id).maybeSingle(),
-          supabase.from("enrollments").select("id").eq("user_id", uid).eq("course_id", c.id).maybeSingle(),
-        ]);
-        allowed = !!ent || !!enr;
-        if (allowed && c.visibility === "exclusive") {
-          const { data: mems } = await supabase.from("organization_memberships")
-            .select("organization_id").eq("user_id", uid).eq("is_active", true);
-          const orgIds = (mems ?? []).map((m: any) => m.organization_id);
-          const ownerOk = c.owner_org_id && orgIds.includes(c.owner_org_id);
-          let catalogOk = false;
-          if (!ownerOk && orgIds.length) {
-            const { data: cat } = await supabase.from("organization_course_catalog")
-              .select("id").eq("course_id", c.id).eq("is_visible", true).in("organization_id", orgIds).limit(1);
-            catalogOk = (cat ?? []).length > 0;
-          }
-          allowed = ownerOk || catalogOk;
-        }
-      }
+      // GATE: regra consolidada (entitlement/enrollment + catálogo + membership
+      // + visibilidade), idêntica à usada na página pública do curso.
+      // Nada de conteúdo (nem iframe) é montado antes desta aprovação.
+      const { allowed } = await resolveCourseAccess({
+        course: c as any,
+        userId: session?.user?.id,
+        isPlatformAdmin,
+      });
       if (!allowed) {
         setAccessChecked(true);
         setDenied(true);
         navigate({ to: "/curso/$courseSlug", params: { courseSlug }, search: { denied: 1 } as any, replace: true });
         return;
       }
+      setCourse(c);
       setAccessChecked(true);
+
+      if (c.delivery_type === "learning_studio_embed") {
+        const [{ data: mats }, { data: cp }] = await Promise.all([
+          supabase.from("course_materials").select("id, title, file_url, kind").eq("course_id", c.id),
+          supabase.from("course_progress").select("*").eq("user_id", session!.user.id).eq("course_id", c.id).maybeSingle(),
+        ]);
+        setMaterials((mats as any[]) ?? []);
+        setLastAccessedAt(cp?.last_accessed_at ?? null);
+        // Registramos apenas o que realmente sabemos: abertura do ambiente.
+        // `percent` não é inventado para cursos entregues por embed externo.
+        await supabase.from("course_progress").upsert({
+          user_id: session!.user.id,
+          course_id: c.id,
+          percent: cp?.percent ?? 0,
+          last_accessed_at: new Date().toISOString(),
+          first_opened_at: cp?.first_opened_at ?? new Date().toISOString(),
+          open_count: (cp?.open_count ?? 0) + 1,
+        }, { onConflict: "user_id,course_id" });
+        return;
+      }
 
       const { data: mods } = await supabase.from("course_modules").select("*, course_lessons(*)").eq("course_id", c.id).order("sort_order");
       setModules((mods as any[]) ?? []);
@@ -103,7 +111,25 @@ function Player() {
 
   if (denied)
     return <div className="player-shell p-8"><p className="player-muted">Acesso negado. Redirecionando…</p></div>;
-  if (!accessChecked || !course || !current)
+  if (!accessChecked || !course)
+    return <div className="player-shell p-8"><p className="player-muted">Carregando…</p></div>;
+
+  // Cursos entregues pelo LearningStudio ganham o workspace dedicado.
+  // Cursos nativos (Vimeo/aulas internas) seguem no player original.
+  if (course.delivery_type === "learning_studio_embed") {
+    if (!course.embed_url)
+      return <div className="player-shell p-8"><p className="player-muted">Conteúdo em preparação.</p></div>;
+    return (
+      <LearningStudioWorkspace
+        course={course}
+        embedUrl={course.embed_url}
+        materials={materials}
+        lastAccessedAt={lastAccessedAt}
+      />
+    );
+  }
+
+  if (!current)
     return <div className="player-shell p-8"><p className="player-muted">Carregando…</p></div>;
 
   return (
@@ -169,9 +195,7 @@ function Player() {
                     onClick={() => setCurrentLessonId(l.id)}
                     className={
                       "w-full text-left text-sm px-3 py-2 rounded-lg transition " +
-                      (l.id === currentLessonId
-                        ? "player-cta"
-                        : "hover:bg-white/5 player-muted")
+                      (l.id === currentLessonId ? "player-cta" : "hover:bg-white/5 player-muted")
                     }
                     style={l.id === currentLessonId ? undefined : { color: "var(--player-ink)" }}
                   >
