@@ -14,7 +14,7 @@ Para cada linha da tabela, use **"Add user → Create new user"** com **"Auto-co
 | -------------------- | ---------------------------------- | ----------------- | ------------------------------ |
 | `platform_admin`     | `admin@sindicolab.demo`            | `SindicoLab#2026` | SíndicoLab                     |
 | `org_admin`          | `admin@guarida.demo`               | `Guarida#2026`    | Guarida Administradora         |
-| `student`            | `aluno@vista-alegre.demo`          | `Vista#2026`      | Vista Alegre Administradora    |
+| `student`            | `aluno@vista-alegre.demo`          | `Vista#2026`      | Administradora CASA    |
 
 > Essas credenciais são apenas para a demonstração local com Rafael e Mari. Nunca reaproveite em produção.
 
@@ -43,7 +43,7 @@ on conflict (user_id, organization_id, role) do nothing;
 
 ### 3. Cenário de teste de isolamento
 
-Logado como `aluno@vista-alegre.demo` (Vista Alegre):
+Logado como `aluno@vista-alegre.demo` (Administradora CASA):
 
 1. Acessar `/curso/atendimento-guarida` → o card lateral deve mostrar **"Curso indisponível no catálogo da sua organização"** e a listagem de módulos/aulas exclusivas da Guarida NÃO deve aparecer (bloqueado pelo RLS `modules_read` / `lessons_read`).
 2. Acessar diretamente `/curso/atendimento-guarida/aprender` → o player redireciona de volta para a página do curso com `?denied=1`; nenhum vídeo é reproduzido.

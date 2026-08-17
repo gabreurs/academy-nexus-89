@@ -1,3 +1,4 @@
+import { CoursePoster } from "@/components/course/CoursePoster";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -106,7 +107,7 @@ function LandingPage() {
                     Continuar assistindo <span className="btn-arrow">→</span>
                   </Link>
                 ) : (
-                  <Link to="/login" className="btn-primary">
+                  <Link to="/login" search={{ next: "/inicio" }} className="btn-primary">
                     Acessar a plataforma <span className="btn-arrow">→</span>
                   </Link>
                 )}
@@ -149,7 +150,7 @@ function LandingPage() {
                           {c.cover_url ? (
                             <img src={c.cover_url} alt={c.title} className="w-full h-full object-cover" />
                           ) : (
-                            <div className="absolute inset-0 flex items-center justify-center opacity-30 text-5xl">▶</div>
+                            <CoursePoster title={c.title} tone="brand" showTitle={false} className="absolute inset-0 h-full w-full" />
                           )}
                         </div>
                         <div className="p-6">
@@ -159,7 +160,7 @@ function LandingPage() {
                           )}
                           <div className="mt-5 flex items-center gap-3 text-[11px] uppercase tracking-widest brand-text-muted">
                             {c.instructor_name && <span>{c.instructor_name}</span>}
-                            {c.duration_minutes && <span>· {Math.round(c.duration_minutes / 60)}h</span>}
+                            {c.duration_minutes ? <span>· {Math.round(c.duration_minutes / 60)}h</span> : null}
                           </div>
                         </div>
                       </Link>

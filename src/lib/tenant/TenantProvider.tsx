@@ -53,7 +53,12 @@ function applyBrandingVars(t: ResolvedTenant | null) {
 async function loadTenant(slugOrHost: { slug?: string | null; hostname?: string | null }): Promise<ResolvedTenant | null> {
   let orgId: string | null = null;
   if (slugOrHost.slug) {
-    const { data } = await supabase.from("organizations").select("*").eq("slug", slugOrHost.slug).maybeSingle();
+    const { data } = await supabase
+      .from("organizations")
+      .select("*")
+      .eq("slug", slugOrHost.slug)
+      .eq("status", "active")
+      .maybeSingle();
     if (data) return await hydrate(data);
   }
   if (slugOrHost.hostname) {

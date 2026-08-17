@@ -67,7 +67,7 @@ export function SiteHeader() {
               </button>
             </>
           ) : (
-            <Link to="/login" className="btn-primary">
+            <Link to="/login" search={{ next: "/inicio" }} className="btn-primary">
               Entrar <span className="btn-arrow">→</span>
             </Link>
           )}

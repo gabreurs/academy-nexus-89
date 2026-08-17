@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { useTenant } from "@/lib/tenant/TenantProvider";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { TenantDemoSwitcher } from "@/components/site/TenantDemoSwitcher";
+import { CoursePoster } from "@/components/course/CoursePoster";
 
 export const Route = createFileRoute("/_authenticated/inicio")({ ssr: false, component: Home });
 
@@ -32,6 +33,12 @@ function Home() {
   const [purchased, setPurchased] = useState<Course[]>([]);
   const [progress, setProgress] = useState<Record<string, { percent: number; updated_at?: string }>>({});
   const [myListIds, setMyListIds] = useState<string[]>(getMyList());
+  const [categories, setCategories] = useState<{ id: string; name: string; sort_order: number }[]>([]);
+
+  useEffect(() => {
+    supabase.from("course_categories").select("id, name, sort_order").order("sort_order")
+      .then(({ data }) => setCategories((data as any[]) ?? []));
+  }, []);
 
   useEffect(() => {
     if (!tenant || !session) return;
@@ -79,6 +86,18 @@ function Home() {
     [items, tenant?.organization.id],
   );
   const trailers = useMemo(() => allCourses.filter((c) => !!c.trailer_url), [allCourses]);
+  const categoryRails = useMemo(
+    () =>
+      categories
+        .map((cat) => ({ cat, list: items.filter((c) => c.category_id === cat.id) }))
+        .filter((r) => r.list.length > 0),
+    [categories, items],
+  );
+  const categoryNameById = useMemo(() => {
+    const m: Record<string, string> = {};
+    categories.forEach((c) => (m[c.id] = c.name));
+    return m;
+  }, [categories]);
   const myList = useMemo(
     () => allCourses.filter((c) => myListIds.includes(c.id)),
     [allCourses, myListIds],
@@ -117,6 +136,17 @@ function Home() {
         {newest.length > 0 && (
           <Rail title="Novidades no acervo" items={newest} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} />
         )}
+        {categoryRails.map(({ cat, list }) => (
+          <Rail
+            key={cat.id}
+            title={cat.name}
+            items={list}
+            categoryName={cat.name}
+            progress={progress}
+            myListIds={myListIds}
+            onToggleList={toggleMyList}
+          />
+        ))}
         {required.length > 0 && (
           <Rail title="Obrigatórios para você" items={required} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} />
         )}
@@ -287,13 +317,15 @@ function EmptyHero({ orgName }: { orgName: string }) {
 }
 
 function Rail({
-  title, subtitle, items, progress, myListIds, onToggleList,
+  title, subtitle, items, progress, myListIds, onToggleList, categoryName, categoryNames,
 }: {
   title: string; subtitle?: string;
   items: Course[];
   progress: Record<string, { percent: number }>;
   myListIds: string[];
   onToggleList: (id: string) => void;
+  categoryName?: string;
+  categoryNames?: Record<string, string>;
 }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const scrollBy = (dir: 1 | -1) => {
@@ -320,6 +352,7 @@ function Rail({
           <RailCard
             key={c.id}
             c={c}
+            categoryName={categoryName ?? (c.category_id ? categoryNames?.[c.category_id] : undefined)}
             percent={progress[c.id]?.percent ?? 0}
             inMyList={myListIds.includes(c.id)}
             onToggleList={onToggleList}
@@ -331,8 +364,8 @@ function Rail({
 }
 
 function RailCard({
-  c, percent, inMyList, onToggleList,
-}: { c: Course; percent: number; inMyList: boolean; onToggleList: (id: string) => void }) {
+  c, percent, inMyList, onToggleList, categoryName,
+}: { c: Course; percent: number; inMyList: boolean; onToggleList: (id: string) => void; categoryName?: string }) {
   return (
     <div className="rail-card snap-start shrink-0 w-[280px] md:w-[340px] rounded-lg overflow-hidden player-surface relative">
       <Link to="/curso/$courseSlug" params={{ courseSlug: c.slug }} className="block">
@@ -340,7 +373,7 @@ function RailCard({
           {c.cover_url ? (
             <img src={c.cover_url} alt={c.title} className="w-full h-full object-cover" />
           ) : (
-            <CoverArt title={c.title} className="absolute inset-0 h-full w-full" />
+            <CoursePoster title={c.title} category={categoryName} className="absolute inset-0 h-full w-full" />
           )}
           {percent > 0 && (
             <div className="absolute inset-x-0 bottom-0 h-1" style={{ background: "rgba(0,0,0,.55)" }}>
