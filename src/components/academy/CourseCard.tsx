@@ -46,6 +46,7 @@ export const CourseCard = memo(function CourseCard({
             <CourseCoverPlaceholder
               title={course.title}
               category={categoryName}
+              showTitle={false}
               className="absolute inset-0 h-full w-full"
             />
           )}
