@@ -19,12 +19,15 @@ function Player() {
   const [lastAccessedAt, setLastAccessedAt] = useState<string | null>(null);
   const [currentLessonId, setCurrentLessonId] = useState<string | null>(null);
   const [accessChecked, setAccessChecked] = useState(false);
+  // Só é preenchido DEPOIS do gate. Enquanto for null, nenhum iframe existe.
+  const [embedUrl, setEmbedUrl] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
   const lastPositionRef = useRef(0);
 
   useEffect(() => {
     (async () => {
       if (authLoading) return;
+      setEmbedUrl(null);
       const { data: c } = await supabase.from("courses").select("*").eq("slug", courseSlug).maybeSingle();
       if (!c) {
         // Curso inexistente OU invisível para este usuário pela RLS:
@@ -53,6 +56,16 @@ function Player() {
       setAccessChecked(true);
 
       if (c.delivery_type === "learning_studio_embed") {
+        // Fonte de entrega protegida: a RLS de course_delivery_sources refaz a
+        // verificação de acesso no banco. Se o gate do frontend fosse burlado,
+        // esta consulta simplesmente não retorna linha.
+        const { data: src } = await supabase
+          .from("course_delivery_sources")
+          .select("embed_url")
+          .eq("course_id", c.id)
+          .maybeSingle();
+        setEmbedUrl((src as any)?.embed_url ?? null);
+
         const [{ data: mats }, { data: cp }] = await Promise.all([
           supabase.from("course_materials").select("id, title, file_url, kind").eq("course_id", c.id),
           supabase.from("course_progress").select("*").eq("user_id", session!.user.id).eq("course_id", c.id).maybeSingle(),
@@ -124,12 +137,12 @@ function Player() {
   // Cursos entregues pelo LearningStudio ganham o workspace dedicado.
   // Cursos nativos (Vimeo/aulas internas) seguem no player original.
   if (course.delivery_type === "learning_studio_embed") {
-    if (!course.embed_url)
+    if (!embedUrl)
       return <div className="player-shell p-8"><p className="player-muted">Conteúdo em preparação.</p></div>;
     return (
       <LearningStudioWorkspace
         course={course}
-        embedUrl={course.embed_url}
+        embedUrl={embedUrl}
         materials={materials}
         lastAccessedAt={lastAccessedAt}
       />
