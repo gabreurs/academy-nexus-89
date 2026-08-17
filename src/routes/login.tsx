@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-r
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { TenantLogo } from "@/components/academy/TenantLogo";
 
 export const Route = createFileRoute("/login")({
   ssr: false,
