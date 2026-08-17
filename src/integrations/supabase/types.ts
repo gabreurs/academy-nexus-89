@@ -363,8 +363,10 @@ export type Database = {
           category_id: string | null
           cover_url: string | null
           created_at: string
+          delivery_type: string
           description: string | null
           duration_minutes: number | null
+          embed_url: string | null
           external_checkout_url: string | null
           id: string
           instructor_bio: string | null
@@ -386,8 +388,10 @@ export type Database = {
           category_id?: string | null
           cover_url?: string | null
           created_at?: string
+          delivery_type?: string
           description?: string | null
           duration_minutes?: number | null
+          embed_url?: string | null
           external_checkout_url?: string | null
           id?: string
           instructor_bio?: string | null
@@ -409,8 +413,10 @@ export type Database = {
           category_id?: string | null
           cover_url?: string | null
           created_at?: string
+          delivery_type?: string
           description?: string | null
           duration_minutes?: number | null
+          embed_url?: string | null
           external_checkout_url?: string | null
           id?: string
           instructor_bio?: string | null
