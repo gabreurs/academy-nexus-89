@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-r
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { TenantLogo } from "@/components/academy/TenantLogo";
 
 export const Route = createFileRoute("/login")({
   ssr: false,
@@ -38,21 +39,31 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-md brand-surface rounded-2xl p-8 border brand-border">
-        <Link to="/" className="text-sm brand-text-muted">← Voltar</Link>
-        <h1 className="mt-4 text-2xl font-semibold">{mode === "login" ? "Entrar" : "Criar conta"}</h1>
-        <p className="text-sm brand-text-muted mt-1">SíndicoLab Academy</p>
-        <form onSubmit={submit} className="mt-6 space-y-3">
+    <div className="academy flex min-h-screen items-center justify-center p-6">
+      <div className="academy-surface academy-border w-full max-w-md rounded-3xl border p-8">
+        <div className="flex items-center justify-between gap-4">
+          <TenantLogo />
+          <Link to="/" className="academy-subtle text-sm hover:opacity-80">← Voltar</Link>
+        </div>
+        <h1 className="mt-7 text-[26px] font-semibold" style={{ letterSpacing: "-0.03em" }}>
+          {mode === "login" ? "Entrar na Academy" : "Criar sua conta"}
+        </h1>
+        <p className="academy-muted mt-1.5 text-sm">
+          {mode === "login" ? "Acesse seus cursos e continue de onde parou." : "Leva menos de um minuto."}
+        </p>
+        <form onSubmit={submit} className="mt-7 space-y-3">
           <input type="email" required placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg px-3 py-2.5 brand-surface-2 border brand-border outline-none focus:border-white/30" />
+            className="w-full px-4 py-3 text-[15px]" />
           <input type="password" required minLength={6} placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg px-3 py-2.5 brand-surface-2 border brand-border outline-none focus:border-white/30" />
-          <button disabled={busy} type="submit" className="w-full rounded-lg py-2.5 brand-btn font-medium disabled:opacity-60">
+            className="w-full px-4 py-3 text-[15px]" />
+          <button disabled={busy} type="submit" className="academy-cta w-full">
             {busy ? "…" : mode === "login" ? "Entrar" : "Criar conta"}
           </button>
         </form>
-        <button onClick={() => setMode(mode === "login" ? "signup" : "login")} className="mt-4 text-sm brand-text-muted hover:brand-accent">
+        <button
+          onClick={() => setMode(mode === "login" ? "signup" : "login")}
+          className="academy-muted mt-5 text-sm hover:opacity-80"
+        >
           {mode === "login" ? "Não tem conta? Criar conta" : "Já tenho conta"}
         </button>
       </div>

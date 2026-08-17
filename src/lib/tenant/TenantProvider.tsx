@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import type { ResolvedTenant } from "./types";
+import { accentContrastInk } from "./accent";
 
 type Ctx = {
   tenant: ResolvedTenant | null;
@@ -42,6 +43,9 @@ function applyBrandingVars(t: ResolvedTenant | null) {
   // Ponte semântica: --tenant-accent é a única cor de marca que sobrevive
   // dentro do palco escuro do player. Sempre acompanha o acento do tenant.
   root.style.setProperty("--tenant-accent", b.accent_color);
+  // CAMADA 2 → só accent. A tinta legível sobre ele é CALCULADA: um tenant
+  // não pode configurar um CTA invisível (amarelo + branco, p. ex.).
+  root.style.setProperty("--tenant-accent-contrast", accentContrastInk(b.accent_color));
   if (b.environment_name) document.title = b.environment_name;
   if (b.favicon_url) {
     let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");

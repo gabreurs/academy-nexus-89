@@ -57,6 +57,9 @@
   --tenant-accent:      var(--brand-accent);
   --tenant-accent-soft: color-mix(in oklab, var(--tenant-accent) 18%, transparent);
   --tenant-accent-ink:  #ffffff;
+  /* Tinta legível sobre o accent. Calculada pelo TenantProvider a partir
+     da luminância real do branding (nunca assumida como branco/preto). */
+  --tenant-accent-contrast: #ffffff;
 
   /* Gradientes institucionais (Studio Marqo / Lab) */
   --gradient-lab: linear-gradient(135deg,
@@ -305,9 +308,8 @@ html.lenis, html.lenis body { height: auto; }
   content: "";
   position: absolute; inset: 0;
   background:
-    radial-gradient(120% 80% at 20% 30%, color-mix(in oklab, var(--tenant-accent) 55%, transparent) 0%, transparent 55%),
-    radial-gradient(90% 70% at 80% 80%, rgba(120, 60, 220, 0.55) 0%, transparent 60%),
-    linear-gradient(160deg, #0b1024 0%, #050710 100%);
+    radial-gradient(120% 80% at 20% 30%, color-mix(in srgb, var(--tenant-accent) 34%, transparent) 0%, transparent 58%),
+    linear-gradient(160deg, #141414 0%, #090909 100%);
 }
 .cover-art::after {
   content: "";
@@ -356,7 +358,7 @@ html.lenis, html.lenis body { height: auto; }
 .player-shell .logo-on-light { display: none; }
 .player-shell .logo-on-dark  { display: inline-block; }
 
-/* Hero do player (inspirado no /play do institucional) */
+/* Hero do player */
 .player-hero {
   position: relative;
   isolation: isolate;
@@ -367,12 +369,261 @@ html.lenis, html.lenis body { height: auto; }
   content: "";
   position: absolute; inset: 0;
   background:
-    radial-gradient(ellipse at 15% 20%, color-mix(in oklab, var(--tenant-accent) 22%, transparent), transparent 55%),
-    radial-gradient(ellipse at 85% 80%, rgba(32,199,245,0.18), transparent 60%),
-    linear-gradient(180deg, #04070F 0%, #060B18 100%);
+    radial-gradient(ellipse at 15% 20%, color-mix(in oklab, var(--tenant-accent) 14%, transparent), transparent 55%),
+    linear-gradient(180deg, #0C0C0C 0%, #090909 100%);
   z-index: 0;
 }
 .player-hero > * { position: relative; z-index: 1; }
+
+/* ============================================================
+   ACADEMY — CAMADA 1: ESTRUTURA GLOBAL COMPARTILHADA
+
+   Superfícies, contraste, tipografia, spacing, raios, estados.
+   Estes valores são IGUAIS para SíndicoLab, Guarida, CASA e qualquer
+   tenant futuro. Nenhuma organização pode sobrescrevê-los — é isso que
+   impede branding ruim de destruir a legibilidade do produto.
+
+   CAMADA 2 (tenant) entra apenas por --tenant-accent /
+   --tenant-accent-contrast, escritos pelo TenantProvider a partir de
+   organization_branding.
+   ============================================================ */
+.academy {
+  --academy-bg:         #090909;
+  --academy-surface-1:  #0F0F0F;
+  --academy-surface-2:  #151515;
+  --academy-surface-3:  #1B1B1B;
+
+  --academy-text:        #F5F5F5;
+  --academy-text-muted:  #A3A3A3;
+  --academy-text-subtle: #737373;
+
+  --academy-border:        rgba(255,255,255,.08);
+  --academy-border-strong: rgba(255,255,255,.14);
+
+  --academy-shadow: 0 1px 0 rgba(255,255,255,.04), 0 18px 50px rgba(0,0,0,.55);
+
+  background: var(--academy-bg);
+  color: var(--academy-text);
+  min-height: 100vh;
+}
+
+/* Container único de todas as superfícies tenant-facing */
+.academy-container {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: 20px;
+}
+@media (min-width: 768px) { .academy-container { padding-inline: 32px; } }
+@media (min-width: 1280px) { .academy-container { padding-inline: 48px; } }
+
+.academy .academy-surface   { background: var(--academy-surface-1); }
+.academy .academy-surface-2 { background: var(--academy-surface-2); }
+.academy .academy-surface-3 { background: var(--academy-surface-3); }
+.academy .academy-border    { border-color: var(--academy-border); }
+.academy .academy-muted     { color: var(--academy-text-muted); }
+.academy .academy-subtle    { color: var(--academy-text-subtle); }
+.academy .academy-accent    { color: var(--tenant-accent); }
+
+/* --- CTA primário global: única superfície pintada pelo accent --- */
+.academy .academy-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  height: 48px;
+  padding-inline: 24px;
+  border-radius: 999px;
+  background: var(--tenant-accent);
+  color: var(--tenant-accent-contrast);
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1;
+  border: 0;
+  transition: filter .18s ease, transform .18s ease;
+}
+.academy .academy-cta:hover { filter: brightness(1.08); }
+.academy .academy-cta:active { transform: translateY(1px); }
+.academy .academy-cta:disabled { filter: grayscale(.5) brightness(.75); cursor: not-allowed; }
+
+/* --- CTA secundário global: NUNCA recebe cor do tenant --- */
+.academy .academy-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  height: 48px;
+  padding-inline: 22px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  color: #F5F5F5;
+  border: 1px solid rgba(255,255,255,.12);
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1;
+  transition: background .18s ease;
+}
+.academy .academy-cta-secondary:hover { background: rgba(255,255,255,.13); }
+
+/* Botão-ícone circular (lista, navegação de rail) */
+.academy .academy-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 44px; width: 44px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  color: #F5F5F5;
+  transition: background .18s ease;
+}
+.academy .academy-icon-btn:hover { background: rgba(255,255,255,.13); }
+.academy .academy-icon-btn[data-active="true"] {
+  background: color-mix(in srgb, var(--tenant-accent) 22%, transparent);
+  border-color: color-mix(in srgb, var(--tenant-accent) 55%, transparent);
+}
+
+/* Chip / badge estrutural. Accent só como detalhe (variante). */
+.academy .academy-chip {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .3rem .6rem;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  background: rgba(255,255,255,.07);
+  color: #D4D4D4;
+  border: 1px solid rgba(255,255,255,.09);
+}
+.academy .academy-chip[data-tone="accent"] {
+  background: color-mix(in srgb, var(--tenant-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--tenant-accent) 40%, transparent);
+  color: #FFFFFF;
+}
+.academy .academy-chip[data-tone="solid"] {
+  background: var(--tenant-accent);
+  border-color: transparent;
+  color: var(--tenant-accent-contrast);
+  font-weight: 600;
+}
+
+/* --- Header global --- */
+.academy-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: 72px;
+  background: rgba(9,9,9,.82);
+  backdrop-filter: blur(14px);
+}
+@media (min-width: 1024px) { .academy-header { height: 80px; } }
+.academy-header[data-transparent="true"] {
+  background: linear-gradient(180deg, rgba(9,9,9,.85) 0%, rgba(9,9,9,.35) 60%, transparent 100%);
+  backdrop-filter: none;
+}
+.academy-header[data-scrolled="true"] {
+  background: rgba(9,9,9,.92);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 1px 0 rgba(255,255,255,.06);
+}
+.academy-nav-link {
+  color: rgba(255,255,255,.78);
+  font-size: 15px;
+  padding: .5rem .75rem;
+  border-radius: 999px;
+  transition: color .18s ease, background .18s ease;
+}
+.academy-nav-link:hover { color: #FFFFFF; background: rgba(255,255,255,.06); }
+.academy-nav-link[data-active="true"] { color: #FFFFFF; }
+
+/* --- Hero compartilhada --- */
+.academy-hero { position: relative; isolation: isolate; overflow: hidden; }
+.academy-hero-media { position: absolute; inset: 0; }
+.academy-hero-scrim {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(90deg, #090909 0%, rgba(9,9,9,.96) 30%, rgba(9,9,9,.68) 58%, rgba(9,9,9,.15) 100%),
+    linear-gradient(0deg, #090909 0%, rgba(9,9,9,.35) 28%, rgba(9,9,9,0) 60%);
+}
+.academy-hero-title {
+  font-size: clamp(34px, 5vw, 72px);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-weight: 550;
+  text-wrap: balance;
+}
+.academy-hero-desc {
+  font-size: 17px;
+  line-height: 1.55;
+  max-width: 560px;
+  color: var(--academy-text-muted);
+}
+@media (min-width: 1024px) { .academy-hero-desc { font-size: 19px; } }
+
+/* --- Rails --- */
+.academy-rail { content-visibility: auto; contain-intrinsic-size: 320px; }
+.academy-rail-title {
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+@media (min-width: 1024px) { .academy-rail-title { font-size: 24px; } }
+.academy-rail-scroller {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  padding-block: 4px 8px;
+}
+.academy-rail-scroller::-webkit-scrollbar { display: none; }
+
+/* --- Card compartilhado --- */
+.academy-card {
+  position: relative;
+  flex: 0 0 auto;
+  width: 260px;
+  border-radius: 15px;
+  overflow: hidden;
+  background: var(--academy-surface-2);
+  box-shadow: var(--academy-shadow);
+  scroll-snap-align: start;
+  transition: transform .2s cubic-bezier(.2,.7,.2,1);
+}
+@media (min-width: 768px)  { .academy-card { width: 300px; } }
+@media (min-width: 1280px) { .academy-card { width: 328px; } }
+@media (hover: hover) {
+  .academy-card:hover { transform: scale(1.025); z-index: 2; }
+  .academy-card:hover .academy-card-actions { opacity: 1; transform: translateY(0); }
+}
+.academy-card-grid { width: 100%; }
+.academy-card-actions {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .18s ease, transform .18s ease;
+}
+@media (hover: none) { .academy-card-actions { opacity: 1; transform: none; } }
+
+/* Estados globais */
+.academy .academy-skeleton {
+  background: linear-gradient(90deg, #151515 25%, #1E1E1E 50%, #151515 75%);
+  background-size: 200% 100%;
+  animation: academy-shimmer 1.4s linear infinite;
+}
+@keyframes academy-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+.academy input, .academy textarea, .academy select {
+  background: var(--academy-surface-2);
+  border: 1px solid var(--academy-border);
+  color: var(--academy-text);
+  border-radius: 12px;
+}
+.academy input::placeholder, .academy textarea::placeholder { color: var(--academy-text-subtle); }
+.academy input:focus-visible, .academy textarea:focus-visible, .academy select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--tenant-accent) 70%, transparent);
+  outline-offset: 1px;
+}
+.academy :focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--tenant-accent) 70%, transparent);
+  outline-offset: 2px;
+}
 
 /* ============================================================
    ADMIN CONSOLE — identidade neutra fixa.
