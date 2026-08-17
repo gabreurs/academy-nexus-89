@@ -149,7 +149,7 @@ function LandingPage() {
                           {c.cover_url ? (
                             <img src={c.cover_url} alt={c.title} className="w-full h-full object-cover" />
                           ) : (
-                            <div className="absolute inset-0 flex items-center justify-center opacity-30 text-5xl">▶</div>
+                            <CoursePoster title={c.title} tone="brand" className="absolute inset-0 h-full w-full" />
                           )}
                         </div>
                         <div className="p-6">

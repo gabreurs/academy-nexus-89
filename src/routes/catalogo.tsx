@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { TenantDemoSwitcher } from "@/components/site/TenantDemoSwitcher";
 import { Reveal } from "@/components/motion/Reveal";
 import { CursorGlow } from "@/components/motion/CursorGlow";
+import { CoursePoster } from "@/components/course/CoursePoster";
 
 const SmoothScroll = lazy(() =>
   import("@/components/motion/SmoothScroll").then((m) => ({ default: m.SmoothScroll })),
@@ -92,7 +93,7 @@ function Catalog() {
                         {c.cover_url ? (
                           <img src={c.cover_url} alt={c.title} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="absolute inset-0 flex items-center justify-center opacity-30 text-5xl">▶</div>
+                          <CoursePoster title={c.title} tone="brand" className="absolute inset-0 h-full w-full" />
                         )}
                         {c.visibility === "exclusive" && (
                           <span
