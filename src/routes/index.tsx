@@ -106,7 +106,7 @@ function LandingPage() {
                     Continuar assistindo <span className="btn-arrow">→</span>
                   </Link>
                 ) : (
-                  <Link to="/login" className="btn-primary">
+                  <Link to="/login" search={{ next: "/inicio" }} className="btn-primary">
                     Acessar a plataforma <span className="btn-arrow">→</span>
                   </Link>
                 )}
