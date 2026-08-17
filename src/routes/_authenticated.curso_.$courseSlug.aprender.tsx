@@ -26,7 +26,14 @@ function Player() {
     (async () => {
       if (authLoading) return;
       const { data: c } = await supabase.from("courses").select("*").eq("slug", courseSlug).maybeSingle();
-      if (!c) { setAccessChecked(true); setDenied(true); return; }
+      if (!c) {
+        // Curso inexistente OU invisível para este usuário pela RLS:
+        // tratamos exatamente como acesso negado.
+        setAccessChecked(true);
+        setDenied(true);
+        navigate({ to: "/catalogo", replace: true });
+        return;
+      }
 
       // GATE: regra consolidada (entitlement/enrollment + catálogo + membership
       // + visibilidade), idêntica à usada na página pública do curso.
