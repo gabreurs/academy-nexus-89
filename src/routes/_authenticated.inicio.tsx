@@ -317,13 +317,15 @@ function EmptyHero({ orgName }: { orgName: string }) {
 }
 
 function Rail({
-  title, subtitle, items, progress, myListIds, onToggleList,
+  title, subtitle, items, progress, myListIds, onToggleList, categoryName, categoryNames,
 }: {
   title: string; subtitle?: string;
   items: Course[];
   progress: Record<string, { percent: number }>;
   myListIds: string[];
   onToggleList: (id: string) => void;
+  categoryName?: string;
+  categoryNames?: Record<string, string>;
 }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const scrollBy = (dir: 1 | -1) => {
@@ -350,6 +352,7 @@ function Rail({
           <RailCard
             key={c.id}
             c={c}
+            categoryName={categoryName ?? (c.category_id ? categoryNames?.[c.category_id] : undefined)}
             percent={progress[c.id]?.percent ?? 0}
             inMyList={myListIds.includes(c.id)}
             onToggleList={onToggleList}
