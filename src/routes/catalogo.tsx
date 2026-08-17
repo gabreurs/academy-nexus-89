@@ -93,7 +93,7 @@ function Catalog() {
                         {c.cover_url ? (
                           <img src={c.cover_url} alt={c.title} className="w-full h-full object-cover" />
                         ) : (
-                          <CoursePoster title={c.title} tone="brand" className="absolute inset-0 h-full w-full" />
+                          <CoursePoster title={c.title} tone="brand" showTitle={false} className="absolute inset-0 h-full w-full" />
                         )}
                         {c.visibility === "exclusive" && (
                           <span
@@ -111,7 +111,7 @@ function Catalog() {
                         )}
                         <div className="mt-5 flex items-center gap-3 text-[11px] uppercase tracking-widest brand-text-muted">
                           {c.instructor_name && <span>{c.instructor_name}</span>}
-                          {c.duration_minutes && <span>· {Math.round(c.duration_minutes / 60)}h</span>}
+                          {c.duration_minutes ? <span>· {Math.round(c.duration_minutes / 60)}h</span> : null}
                         </div>
                       </div>
                     </Link>

@@ -3,6 +3,8 @@ type Props = {
   category?: string | null;
   /** "dark" para trilhas/player, "brand" para superfícies do site do tenant. */
   tone?: "dark" | "brand";
+  /** Oculta o título quando o card já exibe o nome do curso logo abaixo. */
+  showTitle?: boolean;
   className?: string;
 };
 
@@ -18,7 +20,7 @@ function hash(s: string) {
  * correspondente — nada de logo gigante nem arte genérica. Assim que
  * `cover_url` for preenchido, a imagem real substitui este componente.
  */
-export function CoursePoster({ title, category, tone = "dark", className }: Props) {
+export function CoursePoster({ title, category, tone = "dark", showTitle = true, className }: Props) {
   const h = hash(title);
   const angle = 120 + (h % 90);
   const cx = 20 + (h % 60);
@@ -65,12 +67,14 @@ export function CoursePoster({ title, category, tone = "dark", className }: Prop
             {category}
           </span>
         )}
-        <span
-          className="font-display text-sm md:text-base leading-snug line-clamp-3"
-          style={{ color: ink }}
-        >
-          {title}
-        </span>
+        {showTitle && (
+          <span
+            className="font-display text-sm md:text-base leading-snug line-clamp-3"
+            style={{ color: ink }}
+          >
+            {title}
+          </span>
+        )}
       </div>
     </div>
   );
