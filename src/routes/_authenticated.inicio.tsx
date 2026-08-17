@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { useTenant } from "@/lib/tenant/TenantProvider";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { TenantDemoSwitcher } from "@/components/site/TenantDemoSwitcher";
+import { CoursePoster } from "@/components/course/CoursePoster";
 
 export const Route = createFileRoute("/_authenticated/inicio")({ ssr: false, component: Home });
 
@@ -32,6 +33,12 @@ function Home() {
   const [purchased, setPurchased] = useState<Course[]>([]);
   const [progress, setProgress] = useState<Record<string, { percent: number; updated_at?: string }>>({});
   const [myListIds, setMyListIds] = useState<string[]>(getMyList());
+  const [categories, setCategories] = useState<{ id: string; name: string; sort_order: number }[]>([]);
+
+  useEffect(() => {
+    supabase.from("course_categories").select("id, name, sort_order").order("sort_order")
+      .then(({ data }) => setCategories((data as any[]) ?? []));
+  }, []);
 
   useEffect(() => {
     if (!tenant || !session) return;
@@ -79,6 +86,18 @@ function Home() {
     [items, tenant?.organization.id],
   );
   const trailers = useMemo(() => allCourses.filter((c) => !!c.trailer_url), [allCourses]);
+  const categoryRails = useMemo(
+    () =>
+      categories
+        .map((cat) => ({ cat, list: items.filter((c) => c.category_id === cat.id) }))
+        .filter((r) => r.list.length > 0),
+    [categories, items],
+  );
+  const categoryNameById = useMemo(() => {
+    const m: Record<string, string> = {};
+    categories.forEach((c) => (m[c.id] = c.name));
+    return m;
+  }, [categories]);
   const myList = useMemo(
     () => allCourses.filter((c) => myListIds.includes(c.id)),
     [allCourses, myListIds],
@@ -117,6 +136,17 @@ function Home() {
         {newest.length > 0 && (
           <Rail title="Novidades no acervo" items={newest} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} />
         )}
+        {categoryRails.map(({ cat, list }) => (
+          <Rail
+            key={cat.id}
+            title={cat.name}
+            items={list}
+            categoryName={cat.name}
+            progress={progress}
+            myListIds={myListIds}
+            onToggleList={toggleMyList}
+          />
+        ))}
         {required.length > 0 && (
           <Rail title="Obrigatórios para você" items={required} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} />
         )}
