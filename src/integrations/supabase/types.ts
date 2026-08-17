@@ -79,6 +79,57 @@ export type Database = {
         }
         Relationships: []
       }
+      course_comments: {
+        Row: {
+          body: string
+          course_id: string
+          created_at: string
+          id: string
+          is_answered: boolean
+          is_hidden: boolean
+          organization_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          course_id: string
+          created_at?: string
+          id?: string
+          is_answered?: boolean
+          is_hidden?: boolean
+          organization_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          is_answered?: boolean
+          is_hidden?: boolean
+          organization_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_comments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_comments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_entitlements: {
         Row: {
           course_id: string
@@ -267,27 +318,33 @@ export type Database = {
       course_progress: {
         Row: {
           course_id: string
+          first_opened_at: string | null
           id: string
           last_accessed_at: string
           last_lesson_id: string | null
+          open_count: number
           percent: number
           updated_at: string
           user_id: string
         }
         Insert: {
           course_id: string
+          first_opened_at?: string | null
           id?: string
           last_accessed_at?: string
           last_lesson_id?: string | null
+          open_count?: number
           percent?: number
           updated_at?: string
           user_id: string
         }
         Update: {
           course_id?: string
+          first_opened_at?: string | null
           id?: string
           last_accessed_at?: string
           last_lesson_id?: string | null
+          open_count?: number
           percent?: number
           updated_at?: string
           user_id?: string
