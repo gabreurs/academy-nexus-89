@@ -16,10 +16,12 @@ import { useTenant } from "@/lib/tenant/TenantProvider";
  * MUST NOT paper over that with a shared parent-domain cookie in production.
  */
 export function useTenantIdentity() {
-  const { session, memberships, isPlatformAdmin, loading: authLoading } = useAuth();
+  const { session, memberships, isPlatformAdmin, ready: authReady } = useAuth();
   const { tenant, loading: tenantLoading } = useTenant();
 
-  const loading = authLoading || tenantLoading;
+  // Gate só pode decidir quando TUDO está resolvido: sessão + perfil de
+  // memberships (portanto platform_admin) + tenant atual.
+  const loading = !authReady || tenantLoading;
   const orgId = tenant?.organization?.id ?? null;
 
   const belongsToTenant = !!orgId && memberships.some(
