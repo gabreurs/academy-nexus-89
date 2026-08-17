@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useTenant } from "@/lib/tenant/TenantProvider";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { TenantDemoSwitcher } from "@/components/site/TenantDemoSwitcher";
 import { CoursePoster } from "@/components/course/CoursePoster";
+import { useMyList } from "@/lib/list/useMyList";
 
 export const Route = createFileRoute("/_authenticated/inicio")({ ssr: false, component: Home });
 
@@ -20,19 +21,14 @@ type Course = {
   created_at: string;
 };
 
-const LIST_KEY = "sl:mylist";
-function getMyList(): string[] {
-  if (typeof window === "undefined") return [];
-  try { return JSON.parse(localStorage.getItem(LIST_KEY) ?? "[]"); } catch { return []; }
-}
-
 function Home() {
   const { session } = useAuth();
   const { tenant } = useTenant();
   const [items, setItems] = useState<Course[]>([]);
   const [purchased, setPurchased] = useState<Course[]>([]);
   const [progress, setProgress] = useState<Record<string, { percent: number; updated_at?: string; open_count?: number; last_accessed_at?: string }>>({});
-  const [myListIds, setMyListIds] = useState<string[]>(getMyList());
+  const { ids: myListIds, toggle: toggleMyList } = useMyList(session?.user?.id, tenant?.organization.id);
+  const [ratings, setRatings] = useState<Record<string, { avg: number; count: number }>>({});
   const [categories, setCategories] = useState<{ id: string; name: string; sort_order: number }[]>([]);
 
   useEffect(() => {
@@ -64,6 +60,20 @@ function Home() {
       const map: Record<string, any> = {};
       (pr ?? []).forEach((p: any) => (map[p.course_id] = p));
       setProgress(map);
+
+      // Avaliação real (course_reviews) — nenhuma métrica inventada.
+      const allIds = Array.from(new Set([...ids, ...entIds]));
+      if (allIds.length) {
+        const { data: rv } = await supabase.from("course_reviews").select("course_id, rating").in("course_id", allIds);
+        const agg: Record<string, { sum: number; count: number }> = {};
+        (rv ?? []).forEach((r: any) => {
+          const a = (agg[r.course_id] ??= { sum: 0, count: 0 });
+          a.sum += r.rating; a.count += 1;
+        });
+        setRatings(
+          Object.fromEntries(Object.entries(agg).map(([k, v]) => [k, { avg: v.sum / v.count, count: v.count }])),
+        );
+      }
     })();
   }, [tenant?.organization.id, session?.user?.id]);
 
@@ -110,20 +120,12 @@ function Home() {
     return m;
   }, [categories]);
   const myList = useMemo(
-    () => allCourses.filter((c) => myListIds.includes(c.id)),
+    () => allCourses.filter((c) => myListIds.has(c.id)),
     [allCourses, myListIds],
   );
 
   const hero = continueList[0] ?? featured[0] ?? newest[0] ?? items[0] ?? null;
   const heroProgress = hero ? progress[hero.id]?.percent ?? 0 : 0;
-
-  const toggleMyList = (id: string) => {
-    setMyListIds((prev) => {
-      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
-      try { localStorage.setItem(LIST_KEY, JSON.stringify(next)); } catch {}
-      return next;
-    });
-  };
 
   return (
     <div className="player-shell has-hero-header relative">
@@ -132,20 +134,14 @@ function Home() {
       </div>
 
       {hero ? (
-        <Hero course={hero} percent={heroProgress} inMyList={myListIds.includes(hero.id)} onToggleList={toggleMyList} />
+        <Hero course={hero} percent={heroProgress} rating={ratings[hero.id]} inMyList={myListIds.has(hero.id)} onToggleList={toggleMyList} />
       ) : (
         <EmptyHero orgName={tenant?.organization.name ?? ""} />
       )}
 
       <main className="relative z-10 -mt-8 pb-24 space-y-10 md:space-y-12">
         {continueList.length > 0 && (
-          <Rail title="Continue estudando" items={continueList} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} />
-        )}
-        {featured.length > 0 && (
-          <Rail title="Em destaque" items={featured} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} />
-        )}
-        {newest.length > 0 && (
-          <Rail title="Novidades no acervo" items={newest} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} />
+          <Rail title="Continue estudando" items={continueList} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} categoryNames={categoryNameById} />
         )}
         {categoryRails.map(({ cat, list }) => (
           <Rail
@@ -158,24 +154,11 @@ function Home() {
             onToggleList={toggleMyList}
           />
         ))}
-        {required.length > 0 && (
-          <Rail title="Obrigatórios para você" items={required} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} />
-        )}
-        {orgOwned.length > 0 && (
-          <Rail
-            title={`Produzidos por ${tenant?.organization.name ?? "sua empresa"}`}
-            subtitle="Conteúdo exclusivo da sua organização"
-            items={orgOwned} progress={progress} myListIds={myListIds} onToggleList={toggleMyList}
-          />
-        )}
-        {trailers.length > 0 && (
-          <Rail title="Degustações disponíveis" subtitle="Amostras liberadas dos cursos" items={trailers} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} />
-        )}
         {purchased.length > 0 && (
-          <Rail title="Meus cursos comprados" items={purchased} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} />
+          <Rail title="Meus cursos comprados" items={purchased} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} categoryNames={categoryNameById} />
         )}
         {myList.length > 0 && (
-          <Rail title="Minha lista" items={myList} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} />
+          <Rail title="Minha lista" items={myList} progress={progress} myListIds={myListIds} onToggleList={toggleMyList} categoryNames={categoryNameById} />
         )}
 
         {items.length === 0 && purchased.length === 0 && (
@@ -216,14 +199,18 @@ function CoverArt({ title, className }: { title: string; className?: string }) {
 }
 
 function Hero({
-  course, percent, inMyList, onToggleList,
-}: { course: Course; percent: number; inMyList: boolean; onToggleList: (id: string) => void }) {
+  course, percent, inMyList, onToggleList, rating,
+}: {
+  course: Course; percent: number; inMyList: boolean;
+  onToggleList: (id: string) => void;
+  rating?: { avg: number; count: number };
+}) {
   const bg = course.banner_url ?? course.cover_url;
   return (
     <section className="relative isolate">
       <div className="relative h-[88vh] min-h-[600px] max-h-[860px] w-full overflow-hidden">
         {bg ? (
-          <img src={bg} alt={course.title} className="absolute inset-0 h-full w-full object-cover" />
+          <img src={bg} alt={course.title} fetchPriority="high" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
         ) : (
           <CoverArt title="" className="absolute inset-0 h-full w-full" />
         )}
@@ -252,10 +239,16 @@ function Hero({
               )}
               {fmtDuration(course.duration_minutes) && <span>{fmtDuration(course.duration_minutes)}</span>}
               {course.instructor_name && <><span aria-hidden>·</span><span>{course.instructor_name}</span></>}
-              <span aria-hidden>·</span>
-              <span className="inline-flex items-center gap-1">
-                <span style={{ color: "var(--tenant-accent)" }}>★</span> 4.8
-              </span>
+              {rating && rating.count > 0 && (
+                <>
+                  <span aria-hidden>·</span>
+                  <span className="inline-flex items-center gap-1">
+                    <span style={{ color: "var(--tenant-accent)" }}>★</span>
+                    {rating.avg.toFixed(1)}
+                    <span className="opacity-70">({rating.count})</span>
+                  </span>
+                </>
+              )}
             </div>
             {(course.subtitle || course.description) && (
               <p className="mt-5 text-[15px] md:text-base leading-relaxed player-muted line-clamp-3 max-w-xl">
@@ -327,13 +320,13 @@ function EmptyHero({ orgName }: { orgName: string }) {
   );
 }
 
-function Rail({
+const Rail = memo(function Rail({
   title, subtitle, items, progress, myListIds, onToggleList, categoryName, categoryNames,
 }: {
   title: string; subtitle?: string;
   items: Course[];
   progress: Record<string, { percent: number }>;
-  myListIds: string[];
+  myListIds: Set<string>;
   onToggleList: (id: string) => void;
   categoryName?: string;
   categoryNames?: Record<string, string>;
@@ -344,7 +337,7 @@ function Rail({
     el.scrollBy({ left: dir * Math.round(el.clientWidth * 0.9), behavior: "smooth" });
   };
   return (
-    <section className="group/rail">
+    <section className="group/rail rail-section">
       <div className="container-x flex items-end justify-between gap-4">
         <div>
           <h2 className="font-display text-base md:text-lg tracking-tight">{title}</h2>
@@ -365,16 +358,16 @@ function Rail({
             c={c}
             categoryName={categoryName ?? (c.category_id ? categoryNames?.[c.category_id] : undefined)}
             percent={progress[c.id]?.percent ?? 0}
-            inMyList={myListIds.includes(c.id)}
+            inMyList={myListIds.has(c.id)}
             onToggleList={onToggleList}
           />
         ))}
       </div>
     </section>
   );
-}
+});
 
-function RailCard({
+const RailCard = memo(function RailCard({
   c, percent, inMyList, onToggleList, categoryName,
 }: { c: Course; percent: number; inMyList: boolean; onToggleList: (id: string) => void; categoryName?: string }) {
   return (
@@ -382,7 +375,7 @@ function RailCard({
       <Link to="/curso/$courseSlug" params={{ courseSlug: c.slug }} className="block">
         <div className="aspect-video relative overflow-hidden">
           {c.cover_url ? (
-            <img src={c.cover_url} alt={c.title} className="w-full h-full object-cover" />
+            <img src={c.cover_url} alt={c.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
           ) : (
             <CoursePoster title={c.title} category={categoryName} className="absolute inset-0 h-full w-full" />
           )}
@@ -427,4 +420,4 @@ function RailCard({
       </div>
     </div>
   );
-}
+});
