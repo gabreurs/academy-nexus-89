@@ -217,7 +217,7 @@ function AdminPage() {
       title="SíndicoLab"
       nav={NAV}
       active={section}
-      onNavigate={(id) => { setSection(id); if (id !== "orgs") setSelectedOrg((s) => s); }}
+      onNavigate={(id) => { setSection(id); if (id === "orgs") setSelectedOrg(null); }}
       footer={<p>Ambiente global. Alterações aqui afetam todas as Academies.</p>}
     >
       {section === "visao" && (
