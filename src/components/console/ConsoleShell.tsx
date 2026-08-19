@@ -36,7 +36,8 @@ export function ConsoleShell({
 }) {
   const { signOut, user } = useAuth();
   const { resolved, setChoice } = useTheme();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);          // drawer (mobile/tablet)
+  const [collapsed, setCollapsed] = useState(false); // sidebar recolhida (desktop)
 
   const navList = (
     <nav className="space-y-5">
@@ -72,10 +73,14 @@ export function ConsoleShell({
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
-              aria-label="Abrir navegação"
-              className="c-btn min-h-11 min-w-11 lg:hidden"
+              aria-label={collapsed ? "Mostrar navegação" : "Recolher navegação"}
+              aria-expanded={open || !collapsed}
+              className="c-btn min-h-11 min-w-11"
               data-variant="ghost"
-              onClick={() => setOpen((v) => !v)}
+              onClick={() => {
+                if (window.matchMedia("(min-width: 1024px)").matches) setCollapsed((v) => !v);
+                else setOpen((v) => !v);
+              }}
             >
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M4 6h16M4 12h16M4 18h16" />
@@ -127,8 +132,31 @@ export function ConsoleShell({
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-[1400px] gap-8 px-4 py-7 sm:px-6 lg:grid-cols-[228px_minmax(0,1fr)]">
-        <aside className={cn("lg:sticky lg:top-[68px] lg:h-fit", open ? "block" : "hidden lg:block")}>
+      {open && (
+        <button
+          type="button"
+          aria-label="Fechar navegação"
+          className="fixed inset-0 z-30 bg-black/35 lg:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      <div
+        className={cn(
+          "mx-auto grid max-w-[1400px] gap-8 px-4 py-7 sm:px-6",
+          collapsed ? "lg:grid-cols-[minmax(0,1fr)]" : "lg:grid-cols-[228px_minmax(0,1fr)]",
+        )}
+      >
+        <aside
+          className={cn(
+            "lg:sticky lg:top-[68px] lg:h-fit",
+            collapsed && "lg:hidden",
+            open
+              ? "fixed inset-y-0 left-0 z-40 w-[264px] overflow-y-auto border-r p-4 lg:static lg:z-auto lg:w-auto lg:border-0 lg:p-0"
+              : "hidden lg:block",
+          )}
+          style={open ? { background: "var(--c-surface)", borderColor: "var(--c-border-soft)" } : undefined}
+        >
           {navList}
           {footer && <div className="mt-6 border-t c-divide pt-4 text-xs c-muted">{footer}</div>}
         </aside>
