@@ -34,6 +34,12 @@ type Invite = {
   status: "pending" | "accepted" | "revoked" | "expired";
   created_at: string; expires_at: string | null;
 };
+type AccessRequest = {
+  id: string; full_name: string; email: string; phone: string | null;
+  affiliation: string | null; message: string | null;
+  status: "pending" | "approved" | "rejected";
+  review_note: string | null; reviewed_at: string | null; created_at: string;
+};
 type CatalogRow = {
   course_id: string; is_required: boolean; auto_enroll: boolean;
   courses?: { title: string; slug: string; status: string } | null;
@@ -47,6 +53,7 @@ const NAV: ConsoleNavGroup[] = [
   { label: "Pessoas", items: [
     { id: "membros", label: "Membros" },
     { id: "convites", label: "Convites" },
+    { id: "solicitacoes", label: "Solicitações de acesso" },
     { id: "importar", label: "Importar CSV" },
   ] },
   { label: "Configuração", items: [
@@ -74,6 +81,10 @@ function EmpresaPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [catalog, setCatalog] = useState<CatalogRow[]>([]);
+  const [requests, setRequests] = useState<AccessRequest[]>([]);
+  const [reqFilter, setReqFilter] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+  const [reqBusyId, setReqBusyId] = useState<string | null>(null);
+  const [reqMessage, setReqMessage] = useState<null | { kind: "ok" | "err" | "busy"; text: string }>(null);
   const [loading, setLoading] = useState(true);
 
   const [email, setEmail] = useState("");
@@ -96,7 +107,7 @@ function EmpresaPage() {
   const refresh = useCallback(async () => {
     if (!orgId) return;
     setLoading(true);
-    const [{ data: o }, { data: b }, { data: doms }, { data: mems }, { data: invs }, { data: cat }] = await Promise.all([
+    const [{ data: o }, { data: b }, { data: doms }, { data: mems }, { data: invs }, { data: cat }, { data: reqs }] = await Promise.all([
       supabase.from("organizations").select("*").eq("id", orgId).maybeSingle(),
       supabase.from("organization_branding").select("*").eq("organization_id", orgId).maybeSingle(),
       supabase.from("organization_domains").select("id, hostname, is_primary").eq("organization_id", orgId),
@@ -109,6 +120,9 @@ function EmpresaPage() {
       supabase.from("organization_course_catalog")
         .select("course_id, is_required, auto_enroll, courses(title, slug, status)")
         .eq("organization_id", orgId).eq("is_visible", true),
+      supabase.from("access_requests")
+        .select("id, full_name, email, phone, affiliation, message, status, review_note, reviewed_at, created_at")
+        .eq("organization_id", orgId).order("created_at", { ascending: false }),
     ]);
     setOrg(o); setBranding(b); setDomains(doms ?? []);
     const rows = (mems ?? []) as Omit<Member, "profiles">[];
@@ -121,6 +135,7 @@ function EmpresaPage() {
     setMembers(rows.map((r) => ({ ...r, profiles: profileMap[r.user_id] ?? null })));
     setInvites((invs as Invite[]) ?? []);
     setCatalog((cat as any as CatalogRow[]) ?? []);
+    setRequests((reqs as any as AccessRequest[]) ?? []);
     setLoading(false);
   }, [orgId]);
 
@@ -149,6 +164,9 @@ function EmpresaPage() {
   const seatsLeft = seatsLimit != null ? seatsLimit - seatsUsed : null;
   const admins = members.filter((m) => m.role === "org_admin" && m.is_active).length;
 
+  const pendingRequests = requests.filter((r) => r.status === "pending").length;
+  const visibleRequests = reqFilter === "all" ? requests : requests.filter((r) => r.status === reqFilter);
+
   const filteredMembers = members.filter((m) => {
     const q = memberQuery.trim().toLowerCase();
     const matchesQ = !q || (m.profiles?.email ?? "").toLowerCase().includes(q) || (m.profiles?.full_name ?? "").toLowerCase().includes(q);
@@ -176,6 +194,44 @@ function EmpresaPage() {
       : `${email} já existia — vinculado à Academy.` });
     setEmail("");
     await refresh();
+  };
+
+  const decideRequest = async (req: AccessRequest, decision: "approved" | "rejected", note?: string) => {
+    if (!orgId) return;
+    setReqBusyId(req.id); setReqMessage({ kind: "busy", text: "" });
+    try {
+      if (decision === "approved") {
+        // Usa o fluxo legítimo de convite/assento da organização.
+        const { error } = await supabase.functions.invoke("invite-user", {
+          body: { organization_id: orgId, email: req.email, role: "student" },
+        });
+        if (error) {
+          const ctx = (error as any).context;
+          let text = error.message;
+          if (ctx && typeof ctx.json === "function") {
+            try { const j = await ctx.json(); text = j?.message ?? j?.error ?? text; } catch { /* corpo não-JSON */ }
+          }
+          setReqMessage({ kind: "err", text });
+          return;
+        }
+      }
+      const { error: upErr } = await supabase.from("access_requests")
+        .update({
+          status: decision,
+          review_note: note ?? null,
+          reviewed_by: session?.user.id ?? null,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", req.id);
+      if (upErr) { setReqMessage({ kind: "err", text: upErr.message }); return; }
+      setReqMessage({
+        kind: "ok",
+        text: decision === "approved" ? `Acesso liberado para ${req.email}.` : `Solicitação de ${req.email} recusada.`,
+      });
+      await refresh();
+    } finally {
+      setReqBusyId(null);
+    }
   };
 
   const parseCsv = (text: string): { email: string; role: "student" | "org_admin" }[] => {
@@ -267,7 +323,7 @@ function EmpresaPage() {
               </>
             }
           />
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <Stat
               label="Assentos"
               value={`${seatsUsed}${seatsLimit != null ? ` / ${seatsLimit}` : ""}`}
@@ -276,6 +332,7 @@ function EmpresaPage() {
             />
             <Stat label="Membros ativos" value={activeSeats} hint={`${admins} admin(s) da empresa`} />
             <Stat label="Convites pendentes" value={pendingSeats} tone={pendingSeats ? "warn" : undefined} hint={pendingSeats ? "Ocupam assento" : "Nada pendente"} />
+            <Stat label="Solicitações pendentes" value={pendingRequests} tone={pendingRequests ? "warn" : undefined} hint="Aguardando aprovação" />
             <Stat label="Cursos publicados" value={catalog.length} hint="Visíveis para seus alunos" />
           </div>
 
@@ -472,6 +529,97 @@ function EmpresaPage() {
               </div>
             </Card>
           </div>
+        </>
+      )}
+
+      {section === "solicitacoes" && (
+        <>
+          <PageHeader
+            title="Solicitações de acesso"
+            description="Pedidos enviados por quem acessou a Academy sem ter acesso liberado."
+            actions={
+              <>
+                <Select value={reqFilter} onChange={(e) => setReqFilter(e.target.value as any)} className="!mt-0 w-44">
+                  <option value="pending">Pendentes</option>
+                  <option value="approved">Aprovadas</option>
+                  <option value="rejected">Recusadas</option>
+                  <option value="all">Todas</option>
+                </Select>
+                <Button size="sm" onClick={refresh}>Atualizar</Button>
+              </>
+            }
+          />
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Stat label="Pendentes" value={pendingRequests} tone={pendingRequests ? "warn" : undefined} hint="Aguardando decisão" />
+            <Stat label="Aprovadas" value={requests.filter((r) => r.status === "approved").length} hint="Viraram convite/assento" />
+            <Stat label="Assentos livres" value={seatsLeft ?? "sem limite"} tone={seatTone as any} hint="Aprovar consome assento" />
+          </div>
+
+          <div className="mt-4 flex justify-end"><SaveState state={reqMessage} /></div>
+
+          <Card padded={false}>
+            {loading ? <TableSkeleton rows={5} cols={5} /> : visibleRequests.length === 0 ? (
+              <EmptyState
+                title="Nenhuma solicitação"
+                description="Quando alguém pedir acesso pela sua Academy, o pedido aparece aqui."
+              />
+            ) : (
+              <TableWrap>
+                <table className="c-table">
+                  <thead>
+                    <tr><th>Pessoa</th><th>Vínculo</th><th>Enviado em</th><th>Status</th><th /></tr>
+                  </thead>
+                  <tbody>
+                    {visibleRequests.map((r) => (
+                      <tr key={r.id}>
+                        <td>
+                          <span className="font-medium">{r.full_name}</span>
+                          <span className="block text-xs c-muted">{r.email}{r.phone ? ` · ${r.phone}` : ""}</span>
+                          {r.message && <span className="mt-1 block max-w-[46ch] text-xs c-muted">“{r.message}”</span>}
+                        </td>
+                        <td className="c-muted">{r.affiliation ?? "—"}</td>
+                        <td className="c-muted">{new Date(r.created_at).toLocaleDateString("pt-BR")}</td>
+                        <td>
+                          {r.status === "pending" ? <Badge tone="warn">Pendente</Badge>
+                            : r.status === "approved" ? <Badge tone="ok">Aprovada</Badge>
+                            : <Badge tone="danger">Recusada</Badge>}
+                        </td>
+                        <td className="text-right">
+                          {r.status === "pending" ? (
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                size="sm"
+                                variant="primary"
+                                disabled={reqBusyId === r.id || (seatsLeft != null && seatsLeft <= 0)}
+                                onClick={() => decideRequest(r, "approved")}
+                              >
+                                Aprovar acesso
+                              </Button>
+                              <ConfirmAction
+                                label="Recusar"
+                                question="Recusar esta solicitação?"
+                                confirmLabel="Recusar"
+                                onConfirm={() => decideRequest(r, "rejected")}
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-xs c-muted">
+                              {r.reviewed_at ? new Date(r.reviewed_at).toLocaleDateString("pt-BR") : "—"}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </TableWrap>
+            )}
+          </Card>
+
+          <p className="mt-3 text-xs c-muted">
+            Aprovar usa o fluxo oficial de convite da Academy: a pessoa recebe o e-mail para definir a senha e passa a ocupar um assento.
+            Cobrança e venda avulsa de assento ainda não fazem parte do sistema.
+          </p>
         </>
       )}
 

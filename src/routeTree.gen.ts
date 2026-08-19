@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SolicitarAcessoRouteImport } from './routes/solicitar-acesso'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CatalogoRouteImport } from './routes/catalogo'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -20,6 +21,11 @@ import { Route as AuthenticatedEmpresaRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as AuthenticatedCursoCourseSlugAprenderRouteImport } from './routes/_authenticated.curso_.$courseSlug.aprender'
 
+const SolicitarAcessoRoute = SolicitarAcessoRouteImport.update({
+  id: '/solicitar-acesso',
+  path: '/solicitar-acesso',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/catalogo': typeof CatalogoRoute
   '/login': typeof LoginRoute
+  '/solicitar-acesso': typeof SolicitarAcessoRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/empresa': typeof AuthenticatedEmpresaRoute
   '/inicio': typeof AuthenticatedInicioRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/catalogo': typeof CatalogoRoute
   '/login': typeof LoginRoute
+  '/solicitar-acesso': typeof SolicitarAcessoRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/empresa': typeof AuthenticatedEmpresaRoute
   '/inicio': typeof AuthenticatedInicioRoute
@@ -99,6 +107,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/catalogo': typeof CatalogoRoute
   '/login': typeof LoginRoute
+  '/solicitar-acesso': typeof SolicitarAcessoRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/empresa': typeof AuthenticatedEmpresaRoute
   '/_authenticated/inicio': typeof AuthenticatedInicioRoute
@@ -112,6 +121,7 @@ export interface FileRouteTypes {
     | '/'
     | '/catalogo'
     | '/login'
+    | '/solicitar-acesso'
     | '/admin'
     | '/empresa'
     | '/inicio'
@@ -123,6 +133,7 @@ export interface FileRouteTypes {
     | '/'
     | '/catalogo'
     | '/login'
+    | '/solicitar-acesso'
     | '/admin'
     | '/empresa'
     | '/inicio'
@@ -135,6 +146,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/catalogo'
     | '/login'
+    | '/solicitar-acesso'
     | '/_authenticated/admin'
     | '/_authenticated/empresa'
     | '/_authenticated/inicio'
@@ -148,12 +160,20 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   CatalogoRoute: typeof CatalogoRoute
   LoginRoute: typeof LoginRoute
+  SolicitarAcessoRoute: typeof SolicitarAcessoRoute
   CursoCourseSlugRoute: typeof CursoCourseSlugRoute
   DemoTenantSlugRoute: typeof DemoTenantSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/solicitar-acesso': {
+      id: '/solicitar-acesso'
+      path: '/solicitar-acesso'
+      fullPath: '/solicitar-acesso'
+      preLoaderRoute: typeof SolicitarAcessoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -251,6 +271,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   CatalogoRoute: CatalogoRoute,
   LoginRoute: LoginRoute,
+  SolicitarAcessoRoute: SolicitarAcessoRoute,
   CursoCourseSlugRoute: CursoCourseSlugRoute,
   DemoTenantSlugRoute: DemoTenantSlugRoute,
 }
