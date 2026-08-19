@@ -202,9 +202,7 @@ function Catalog() {
             ))}
           </div>
         )}
-      </main>
-
-      <TenantDemoSwitcher />
-    </div>
+      </div>
+    </AcademyShell>
   );
 }
