@@ -85,8 +85,9 @@
 
 /* ---------- Base ---------- */
 html, body {
-  background: var(--brand-bg);
-  color: var(--brand-text);
+  /* Fundo da página = token do tenant (painel de marca). Sem derivação. */
+  background: var(--tenant-canvas-light, #FFFFFF);
+  color: var(--tenant-ink-light, #121214);
   font-family: "Mona Sans", "InterLocal", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
@@ -98,6 +99,11 @@ html, body {
 /* Lenis (importado dinamicamente) — hooks básicos */
 html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
+
+html.dark, html.dark body {
+  background: var(--tenant-canvas-dark, #0B0B0E);
+  color: var(--tenant-ink-dark, #F3F3F5);
+}
 .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
 
 /* ---------- Classes utilitárias legadas (mantém compat com componentes existentes) ---------- */
@@ -817,18 +823,21 @@ html.lenis, html.lenis body { height: auto; }
      TenantProvider a partir do branding. O fallback abaixo é o neutro
      editorial padrão da plataforma.
      ------------------------------------------------------------------ */
-  --tenant-canvas-base:    #F6F6F4;
-  --tenant-surface-base:   #FFFFFF;
-  --tenant-tint-strength:  4%;
-  --tenant-ink-base:       #17171B;
+  /* Valores CONFIGURADOS pelo tenant (painel de marca → TenantProvider).
+     Nenhuma superfície principal é derivada do accent. */
+  --tenant-canvas-base:    var(--tenant-canvas-light, #FFFFFF);
+  --tenant-surface-base:   var(--tenant-surface-light, #FFFFFF);
+  --tenant-ink-base:       var(--tenant-ink-light, #121214);
 
-  --ax-canvas:           color-mix(in oklab, var(--tenant-accent) var(--tenant-tint-strength), var(--tenant-canvas-base));
-  --ax-surface:          color-mix(in oklab, var(--tenant-accent) calc(var(--tenant-tint-strength) / 4), var(--tenant-surface-base));
-  --ax-surface-raised:   color-mix(in oklab, var(--tenant-accent) calc(var(--tenant-tint-strength) / 1.6), #F1F1EF);
-  --ax-surface-hover:    color-mix(in oklab, var(--tenant-accent) calc(var(--tenant-tint-strength) * 1.6), #EAEAE7);
-  --ax-surface-selected: color-mix(in oklab, var(--tenant-accent) 18%, #FFFFFF);
-  --ax-surface-inverse:  #121215;
-  --ax-surface-brand:    color-mix(in oklab, var(--tenant-accent) 14%, var(--tenant-surface-base));
+  --ax-canvas:           var(--tenant-canvas-base);
+  --ax-surface:          var(--tenant-surface-base);
+  /* raised/hover: derivação NEUTRA (tinta), nunca accent */
+  --ax-surface-raised:   color-mix(in oklab, var(--tenant-ink-base) 4%, var(--tenant-surface-base));
+  --ax-surface-hover:    color-mix(in oklab, var(--tenant-ink-base) 7%, var(--tenant-surface-base));
+  /* microestado: aqui o accent é permitido */
+  --ax-surface-selected: color-mix(in oklab, var(--tenant-accent) 16%, var(--tenant-surface-base));
+  --ax-surface-inverse:  var(--tenant-ink-base);
+  --ax-surface-brand:    color-mix(in oklab, var(--tenant-accent) 12%, var(--tenant-surface-base));
 
   --ax-veil:        color-mix(in oklab, var(--tenant-ink-base) 5%, transparent);
   --ax-veil-strong: color-mix(in oklab, var(--tenant-ink-base) 10%, transparent);
@@ -838,10 +847,12 @@ html.lenis, html.lenis body { height: auto; }
   --ax-border-strong:  color-mix(in oklab, var(--tenant-ink-base) 24%, transparent);
 
   --ax-text:           var(--tenant-ink-base);
-  --ax-text-secondary: color-mix(in oklab, var(--tenant-ink-base) 66%, #FFFFFF);
-  --ax-text-tertiary:  color-mix(in oklab, var(--tenant-ink-base) 48%, #FFFFFF);
-  --ax-text-disabled:  color-mix(in oklab, var(--tenant-ink-base) 32%, #FFFFFF);
+  --ax-text-secondary: color-mix(in oklab, var(--tenant-ink-base) 66%, var(--tenant-canvas-base));
+  --ax-text-tertiary:  color-mix(in oklab, var(--tenant-ink-base) 48%, var(--tenant-canvas-base));
+  --ax-text-disabled:  color-mix(in oklab, var(--tenant-ink-base) 32%, var(--tenant-canvas-base));
   --ax-on-accent:      var(--tenant-accent-contrast);
+  --ax-focus-ring:     var(--tenant-accent);
+  --ax-progress:       var(--tenant-accent);
 
   --ax-success: #157F4B;
   --ax-warning: #A66A00;
@@ -878,13 +889,18 @@ html.lenis, html.lenis body { height: auto; }
 .dark .academy,
 .academy[data-surface="dark"],
 .ax-dark-band {
-  --ax-canvas:           color-mix(in oklab, var(--tenant-accent) 3%,  #0B0B0E);
-  --ax-surface:          color-mix(in oklab, var(--tenant-accent) 4%,  #131317);
-  --ax-surface-raised:   color-mix(in oklab, var(--tenant-accent) 5%,  #1A1A1F);
-  --ax-surface-hover:    color-mix(in oklab, var(--tenant-accent) 8%,  #232329);
-  --ax-surface-selected: color-mix(in oklab, var(--tenant-accent) 20%, #232329);
-  --ax-surface-inverse:  #F5F5F7;
-  --ax-surface-brand:    color-mix(in oklab, var(--tenant-accent) 16%, #131317);
+  /* Paleta de superfície PRÓPRIA do modo escuro, configurada pelo tenant. */
+  --tenant-canvas-base:  var(--tenant-canvas-dark, #0B0B0E);
+  --tenant-surface-base: var(--tenant-surface-dark, #141418);
+  --tenant-ink-base:     var(--tenant-ink-dark, #F3F3F5);
+
+  --ax-canvas:           var(--tenant-canvas-base);
+  --ax-surface:          var(--tenant-surface-base);
+  --ax-surface-raised:   color-mix(in oklab, #FFFFFF 5%, var(--tenant-surface-base));
+  --ax-surface-hover:    color-mix(in oklab, #FFFFFF 9%, var(--tenant-surface-base));
+  --ax-surface-selected: color-mix(in oklab, var(--tenant-accent) 22%, var(--tenant-surface-base));
+  --ax-surface-inverse:  var(--tenant-ink-base);
+  --ax-surface-brand:    color-mix(in oklab, var(--tenant-accent) 16%, var(--tenant-surface-base));
 
   --ax-veil:        rgba(255,255,255,.06);
   --ax-veil-strong: rgba(255,255,255,.12);
@@ -893,10 +909,12 @@ html.lenis, html.lenis body { height: auto; }
   --ax-border:         rgba(255,255,255,.12);
   --ax-border-strong:  rgba(255,255,255,.2);
 
-  --ax-text:           #F3F3F5;
-  --ax-text-secondary: #B6B6BF;
-  --ax-text-tertiary:  #8C8C97;
-  --ax-text-disabled:  #5B5B64;
+  --ax-text:           var(--tenant-ink-base);
+  --ax-text-secondary: color-mix(in oklab, var(--tenant-ink-base) 72%, var(--tenant-canvas-base));
+  --ax-text-tertiary:  color-mix(in oklab, var(--tenant-ink-base) 55%, var(--tenant-canvas-base));
+  --ax-text-disabled:  color-mix(in oklab, var(--tenant-ink-base) 38%, var(--tenant-canvas-base));
+  --ax-focus-ring:     var(--tenant-accent);
+  --ax-progress:       var(--tenant-accent);
 
   --ax-success: #4ADE80;
   --ax-warning: #FBBF24;

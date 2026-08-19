@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
 import { ArrowRight, PlayCircle } from "lucide-react";
 import { useAcademyExperience, useTenant } from "@/lib/tenant/TenantProvider";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -44,7 +44,26 @@ export const Route = createFileRoute("/")({
  */
 function HomeRoute() {
   const { loading, visibleSession } = useTenantIdentity();
-  if (loading) return <AcademyShell footer={false}><div className="ax-container py-16"><Skeleton className="h-[380px] w-full" /></div></AcademyShell>;
+  const exp = useAcademyExperience();
+  const navigate = useNavigate();
+  const isCorporate = exp.type === "corporate";
+  // Academy corporativa: quem já entrou não vê a porta institucional de novo.
+  // A decisão vem do MODELO da Academy, nunca do nome do tenant.
+  const shouldRedirect = !loading && !!visibleSession && isCorporate;
+
+  useEffect(() => {
+    if (shouldRedirect) navigate({ to: "/inicio", replace: true });
+  }, [shouldRedirect, navigate]);
+
+  if (loading || shouldRedirect) {
+    return (
+      <AcademyShell footer={false}>
+        <div className="ax-container py-16">
+          <Skeleton className="h-[380px] w-full" />
+        </div>
+      </AcademyShell>
+    );
+  }
   return visibleSession ? <AuthenticatedHome /> : <Storefront />;
 }
 
@@ -197,7 +216,7 @@ function Storefront() {
           corporate → porta institucional (quem somos, como se entra)
           marketplace → storefront de descoberta (conteúdo primeiro) */}
       {isCorporate ? (
-        <AcademyLanding courseCount={courses.length} />
+        <AcademyLanding courseCount={courses.length} courses={courses} />
       ) : (
       <section className="ax-hero" data-tone="editorial">
         <div className="ax-container grid w-full items-center gap-10 lg:grid-cols-[minmax(0,1fr)_460px]">

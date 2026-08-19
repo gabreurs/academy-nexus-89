@@ -698,6 +698,9 @@ export type Database = {
           accent_color: string
           background_color: string
           banner_url: string | null
+          dark_background_color: string
+          dark_surface_color: string
+          dark_text_color: string
           environment_name: string | null
           favicon_url: string | null
           logo_dark_url: string | null
@@ -715,6 +718,9 @@ export type Database = {
           accent_color?: string
           background_color?: string
           banner_url?: string | null
+          dark_background_color?: string
+          dark_surface_color?: string
+          dark_text_color?: string
           environment_name?: string | null
           favicon_url?: string | null
           logo_dark_url?: string | null
@@ -732,6 +738,9 @@ export type Database = {
           accent_color?: string
           background_color?: string
           banner_url?: string | null
+          dark_background_color?: string
+          dark_surface_color?: string
+          dark_text_color?: string
           environment_name?: string | null
           favicon_url?: string | null
           logo_dark_url?: string | null
