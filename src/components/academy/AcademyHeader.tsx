@@ -1,5 +1,6 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { Building2, LogOut, Search, Shield, User } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useTenantIdentity } from "@/lib/tenant/useTenantIdentity";
 import { TenantLogo } from "./TenantLogo";
@@ -14,6 +15,8 @@ export function AcademyHeader({ transparent = false }: { transparent?: boolean }
   const { visibleSession, hasTenantAccess, isPlatformAdmin } = useTenantIdentity();
   const showAuthed = !!visibleSession && hasTenantAccess;
   const [scrolled, setScrolled] = useState(false);
+  const [q, setQ] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -23,42 +26,52 @@ export function AcademyHeader({ transparent = false }: { transparent?: boolean }
   }, []);
 
   return (
-    <header
-      className="academy-header"
-      data-transparent={transparent && !scrolled ? "true" : "false"}
-      data-scrolled={scrolled ? "true" : "false"}
-    >
-      <div className="academy-container flex h-full items-center justify-between gap-4">
+    <header className="ax-header" data-transparent={transparent && !scrolled ? "true" : "false"}>
+      <div className="ax-container flex h-full items-center gap-3 md:gap-6">
         <Link to={showAuthed ? "/inicio" : "/"} className="flex shrink-0 items-center" aria-label="Início">
           <TenantLogo />
         </Link>
 
-        <nav className="flex min-w-0 items-center gap-1">
-          <Link to="/catalogo" className="academy-nav-link" activeProps={{ "data-active": "true" } as any}>
-            Catálogo
-          </Link>
-          {showAuthed ? (
-            <>
-              <Link
-                to="/inicio"
-                className="academy-nav-link hidden sm:inline-flex"
-                activeProps={{ "data-active": "true" } as any}
-              >
-                Minha área
-              </Link>
-              <AccountMenu
-                email={visibleSession?.user?.email ?? ""}
-                isOrgAdmin={isOrgAdmin()}
-                isPlatformAdmin={isPlatformAdmin}
-                onSignOut={signOut}
-              />
-            </>
-          ) : (
-            <Link to="/login" search={{ next: "/inicio" }} className="academy-cta ml-1">
-              Entrar
+        <nav className="hidden min-w-0 items-center gap-0.5 md:flex">
+          {showAuthed && (
+            <Link to="/inicio" className="ax-navlink" activeProps={{ "data-active": "true" } as any}>
+              Meus estudos
             </Link>
           )}
+          <Link to="/catalogo" className="ax-navlink" activeProps={{ "data-active": "true" } as any}>
+            Catálogo
+          </Link>
         </nav>
+
+        <form
+          className="ax-search ml-auto w-full max-w-[120px] sm:max-w-[240px] lg:max-w-[320px]"
+          onSubmit={(e) => {
+            e.preventDefault();
+            navigate({ to: "/catalogo", search: { q: q.trim() || undefined } });
+          }}
+          role="search"
+        >
+          <Search size={15} className="shrink-0" aria-hidden />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar cursos"
+            aria-label="Buscar cursos"
+          />
+        </form>
+
+        {showAuthed ? (
+          <AccountMenu
+            email={visibleSession?.user?.email ?? ""}
+            isOrgAdmin={isOrgAdmin()}
+            isPlatformAdmin={isPlatformAdmin}
+            onSignOut={signOut}
+          />
+        ) : (
+          <Link to="/login" search={{ next: "/inicio" }} className="ax-btn shrink-0" data-variant="primary">
+            Entrar
+          </Link>
+        )}
       </div>
     </header>
   );
@@ -94,7 +107,7 @@ function AccountMenu({
   }, [open]);
 
   return (
-    <div className="relative ml-1" ref={ref}>
+    <div className="relative shrink-0" ref={ref}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -102,37 +115,45 @@ function AccountMenu({
         aria-expanded={open}
         aria-label="Conta"
         className="grid h-10 w-10 place-items-center rounded-full text-[15px] font-semibold"
-        style={{
-          background: "var(--tenant-accent)",
-          color: "var(--tenant-accent-contrast)",
-        }}
+        style={{ background: "var(--tenant-accent)", color: "var(--tenant-accent-contrast)" }}
       >
         {initial}
       </button>
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+10px)] w-60 overflow-hidden rounded-2xl border p-1.5"
-          style={{
-            background: "#151515",
-            borderColor: "rgba(255,255,255,.12)",
-            boxShadow: "0 24px 60px rgba(0,0,0,.6)",
-          }}
+          className="ax-panel-raised absolute right-0 top-[calc(100%+10px)] w-64 overflow-hidden p-1.5"
+          style={{ boxShadow: "var(--ax-shadow-lg)" }}
         >
-          <p className="truncate px-3 py-2 text-[12px]" style={{ color: "#737373" }}>
-            {email}
-          </p>
-          <MenuLink to="/inicio" onClick={() => setOpen(false)}>Minha área</MenuLink>
-          <MenuLink to="/catalogo" onClick={() => setOpen(false)}>Catálogo</MenuLink>
-          {isOrgAdmin && <MenuLink to="/empresa" onClick={() => setOpen(false)}>Minha empresa</MenuLink>}
-          {isPlatformAdmin && <MenuLink to="/admin" onClick={() => setOpen(false)}>Console de administração</MenuLink>}
+          <p className="ax-meta truncate px-3 py-2">{email}</p>
+          <div className="ax-divider my-1" />
+          <MenuLink to="/inicio" onClick={() => setOpen(false)} icon={<User size={15} />}>
+            Meus estudos
+          </MenuLink>
+          <MenuLink to="/catalogo" onClick={() => setOpen(false)} icon={<Search size={15} />}>
+            Catálogo
+          </MenuLink>
+          {isOrgAdmin && (
+            <MenuLink to="/empresa" onClick={() => setOpen(false)} icon={<Building2 size={15} />}>
+              Minha empresa
+            </MenuLink>
+          )}
+          {isPlatformAdmin && (
+            <MenuLink to="/admin" onClick={() => setOpen(false)} icon={<Shield size={15} />}>
+              Console de administração
+            </MenuLink>
+          )}
+          <div className="ax-divider my-1" />
           <button
             role="menuitem"
-            onClick={() => { setOpen(false); void onSignOut(); }}
-            className="mt-1 w-full rounded-xl px-3 py-2 text-left text-[14px] transition hover:bg-white/8"
-            style={{ color: "#D4D4D4" }}
+            onClick={() => {
+              setOpen(false);
+              void onSignOut();
+            }}
+            className="flex w-full items-center gap-2.5 rounded-[10px] px-3 py-2 text-left text-[14px] transition hover:bg-white/8"
+            style={{ color: "var(--ax-text-secondary)" }}
           >
-            Sair
+            <LogOut size={15} /> Sair
           </button>
         </div>
       )}
@@ -140,15 +161,26 @@ function AccountMenu({
   );
 }
 
-function MenuLink({ to, onClick, children }: { to: string; onClick: () => void; children: React.ReactNode }) {
+function MenuLink({
+  to,
+  onClick,
+  icon,
+  children,
+}: {
+  to: string;
+  onClick: () => void;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <Link
       to={to as any}
       role="menuitem"
       onClick={onClick}
-      className="block rounded-xl px-3 py-2 text-[14px] transition hover:bg-white/8"
-      style={{ color: "#F5F5F5" }}
+      className="flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-[14px] transition hover:bg-white/8"
+      style={{ color: "var(--ax-text)" }}
     >
+      {icon}
       {children}
     </Link>
   );
