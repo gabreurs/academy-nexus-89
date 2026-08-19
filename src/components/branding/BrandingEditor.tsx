@@ -2,17 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { applyBrandingVars } from "@/lib/tenant/TenantProvider";
 import { accentContrastInk } from "@/lib/tenant/accent";
+import { Button, Field, Input, SaveState, Textarea } from "@/components/console/ui";
 
 /**
  * EDITOR DE MARCA = painel do sistema real de tokens.
  *
- * Cada campo aqui corresponde 1:1 a um token consumido pelo frontend:
+ * Cada campo corresponde 1:1 a um token consumido pelo frontend:
  *   accent_color            → --tenant-accent (ação, seleção, foco, progresso)
  *   background_color        → --ax-canvas (tema claro)
  *   surface_color           → --ax-surface (tema claro)
  *   text_color              → --ax-text (tema claro)
  *   dark_*                  → mesmos tokens no tema escuro
- * Não existe superfície derivada do accent.
+ * Nenhuma superfície é derivada do accent.
  */
 type Branding = {
   organization_id: string;
@@ -60,12 +61,23 @@ type ColorKey = keyof Pick<
   | "dark_background_color" | "dark_surface_color" | "dark_text_color"
 >;
 
+const TABS = [
+  ["marca", "Marca"],
+  ["cores", "Cores"],
+  ["claro", "Tema claro"],
+  ["escuro", "Tema escuro"],
+  ["experiencia", "Experiência"],
+] as const;
+type Tab = (typeof TABS)[number][0];
+
 export function BrandingEditor({ organizationId }: { organizationId: string }) {
   const [branding, setBranding] = useState<Branding | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [tab, setTab] = useState<Tab>("marca");
   const [mode, setMode] = useState<"light" | "dark">("light");
-  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [msg, setMsg] = useState<null | { kind: "ok" | "err" | "busy"; text: string }>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,6 +90,8 @@ export function BrandingEditor({ organizationId }: { organizationId: string }) {
         .maybeSingle();
       if (cancelled) return;
       setBranding({ organization_id: organizationId, ...DEFAULTS, ...((data as any) ?? {}) });
+      setDirty(false);
+      setMsg(null);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -85,20 +99,22 @@ export function BrandingEditor({ organizationId }: { organizationId: string }) {
 
   const save = async () => {
     if (!branding) return;
-    setBusy(true); setMsg(null);
-    const payload = { ...branding, organization_id: organizationId };
+    setBusy(true); setMsg({ kind: "busy", text: "" });
     const { error } = await supabase
       .from("organization_branding")
-      .upsert(payload, { onConflict: "organization_id" });
+      .upsert({ ...branding, organization_id: organizationId }, { onConflict: "organization_id" });
     setBusy(false);
     if (error) { setMsg({ kind: "err", text: error.message }); return; }
-    // Aplica imediatamente os MESMOS tokens que o frontend consome.
     applyBrandingVars(branding);
+    setDirty(false);
     setMsg({ kind: "ok", text: "Marca salva e aplicada à Academy." });
   };
 
-  const upd = <K extends keyof Branding>(k: K, v: Branding[K]) =>
+  const upd = <K extends keyof Branding>(k: K, v: Branding[K]) => {
+    setDirty(true);
+    setMsg(null);
     setBranding((b) => (b ? { ...b, [k]: v } : b));
+  };
 
   const preview = useMemo(() => {
     if (!branding) return null;
@@ -109,110 +125,148 @@ export function BrandingEditor({ organizationId }: { organizationId: string }) {
       ink: dark ? branding.dark_text_color : branding.text_color,
       accent: branding.accent_color,
       onAccent: accentContrastInk(branding.accent_color),
+      logo: dark ? branding.logo_dark_url ?? branding.logo_light_url : branding.logo_light_url ?? branding.logo_dark_url,
     };
   }, [branding, mode]);
 
-  if (loading || !branding) return <p className="brand-text-muted text-sm">Carregando marca…</p>;
+  if (loading || !branding) {
+    return (
+      <div className="grid gap-3" aria-busy="true">
+        <div className="c-skel h-8 w-48" />
+        <div className="c-skel h-40 w-full" />
+      </div>
+    );
+  }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="space-y-7">
-        <Group title="Marca" hint="Identidade compartilhada entre os dois temas.">
-          <Colors branding={branding} upd={upd} fields={[
-            ["primary_color", "Primária", "Tipografia/elementos de marca"],
-            ["secondary_color", "Secundária", "Apoio"],
-            ["accent_color", "Destaque (ações)", "CTA, seleção, foco, progresso"],
-          ]} />
-        </Group>
+    <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="min-w-0">
+        <div className="flex flex-wrap gap-1 border-b c-divide">
+          {TABS.map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className="-mb-px border-b-2 px-3 py-2 text-sm"
+              style={{
+                borderColor: tab === id ? "var(--c-text)" : "transparent",
+                color: tab === id ? "var(--c-text)" : "var(--c-muted)",
+                fontWeight: tab === id ? 500 : 400,
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
-        <Group title="Tema claro" hint="Superfícies neutras — não recebem tinta do destaque.">
-          <Colors branding={branding} upd={upd} fields={[
-            ["background_color", "Fundo da página", "--ax-canvas"],
-            ["surface_color", "Superfície", "--ax-surface (cards, header)"],
-            ["text_color", "Texto", "--ax-text"],
-          ]} />
-        </Group>
-
-        <Group title="Tema escuro" hint="Paleta própria, não é inversão automática do claro.">
-          <Colors branding={branding} upd={upd} fields={[
-            ["dark_background_color", "Fundo da página", "--ax-canvas (dark)"],
-            ["dark_surface_color", "Superfície", "--ax-surface (dark)"],
-            ["dark_text_color", "Texto", "--ax-text (dark)"],
-          ]} />
-        </Group>
-
-        <Group title="Editorial" hint="Logos, favicon e arte de topo do tenant.">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {([
-              ["logo_light_url", "Logo (sobre fundo claro)"],
-              ["logo_dark_url", "Logo (sobre fundo escuro)"],
-              ["favicon_url", "Favicon"],
-              ["banner_url", "Arte de topo / hero"],
-            ] as const).map(([key, label]) => (
-              <label key={key} className="block">
-                <span className="text-xs brand-text-muted">{label}</span>
-                <input
-                  value={(branding[key] as string | null) ?? ""}
-                  onChange={(e) => upd(key, (e.target.value || null) as any)}
-                  placeholder="https://…"
-                  className="mt-1 w-full rounded-lg px-3 py-2 brand-surface-2 border brand-border text-sm"
-                />
-              </label>
-            ))}
-          </div>
-        </Group>
-
-        <Group title="Boas-vindas">
-          <div className="grid gap-3">
-            <label className="block">
-              <span className="text-xs brand-text-muted">Nome do ambiente</span>
-              <input
-                value={branding.environment_name ?? ""}
-                onChange={(e) => upd("environment_name", e.target.value || null)}
-                className="mt-1 w-full rounded-lg px-3 py-2 brand-surface-2 border brand-border text-sm"
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs brand-text-muted">Título de boas-vindas</span>
-              <input
-                value={branding.welcome_title ?? ""}
-                onChange={(e) => upd("welcome_title", e.target.value || null)}
-                className="mt-1 w-full rounded-lg px-3 py-2 brand-surface-2 border brand-border text-sm"
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs brand-text-muted">Mensagem</span>
-              <textarea
-                rows={3}
-                value={branding.welcome_message ?? ""}
-                onChange={(e) => upd("welcome_message", e.target.value || null)}
-                className="mt-1 w-full rounded-lg px-3 py-2 brand-surface-2 border brand-border text-sm"
-              />
-            </label>
-          </div>
-        </Group>
-
-        <div className="flex items-center gap-3">
-          <button onClick={save} disabled={busy} className="brand-btn rounded-lg px-4 py-2 text-sm disabled:opacity-60">
-            {busy ? "Salvando…" : "Salvar marca"}
-          </button>
-          {msg && (
-            <span className={`text-sm ${msg.kind === "ok" ? "text-emerald-500" : "text-red-500"}`}>{msg.text}</span>
+        <div className="pt-5">
+          {tab === "marca" && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {([
+                ["logo_light_url", "Logo para fundo claro", "Usada no tema claro da Academy."],
+                ["logo_dark_url", "Logo para fundo escuro", "Usada no tema escuro e sobre imagens."],
+                ["favicon_url", "Favicon", "Ícone da aba do navegador."],
+                ["environment_name", "Nome do ambiente", "Aparece no header e no título das páginas."],
+              ] as const).map(([key, label, hint]) => (
+                <Field key={key} label={label} hint={hint}>
+                  <Input
+                    value={(branding[key] as string | null) ?? ""}
+                    onChange={(e) => upd(key, (e.target.value || null) as any)}
+                    placeholder={key === "environment_name" ? "Academy da Empresa" : "https://…"}
+                  />
+                  {key.endsWith("url") && branding[key] && (
+                    <span
+                      className="mt-2 flex h-12 items-center rounded-lg border px-3"
+                      style={{ borderColor: "var(--c-border-soft)", background: key === "logo_dark_url" ? "#111114" : "#FFFFFF" }}
+                    >
+                      <img src={branding[key] as string} alt="" className="max-h-8 w-auto max-w-[160px] object-contain" />
+                    </span>
+                  )}
+                </Field>
+              ))}
+            </div>
           )}
+
+          {tab === "cores" && (
+            <Colors
+              branding={branding} upd={upd}
+              fields={[
+                ["accent_color", "Destaque (ações)", "CTA, seleção, foco e progresso"],
+                ["primary_color", "Primária", "Elementos de marca e tipografia editorial"],
+                ["secondary_color", "Secundária", "Apoio e detalhes"],
+              ]}
+            />
+          )}
+
+          {tab === "claro" && (
+            <>
+              <p className="mb-4 text-xs c-muted">Superfícies neutras do tema claro. Não recebem tinta do destaque.</p>
+              <Colors
+                branding={branding} upd={upd}
+                fields={[
+                  ["background_color", "Fundo da página", "--ax-canvas"],
+                  ["surface_color", "Superfície", "--ax-surface (cards, header)"],
+                  ["text_color", "Texto", "--ax-text"],
+                ]}
+              />
+            </>
+          )}
+
+          {tab === "escuro" && (
+            <>
+              <p className="mb-4 text-xs c-muted">Paleta própria do escuro — não é inversão automática do claro.</p>
+              <Colors
+                branding={branding} upd={upd}
+                fields={[
+                  ["dark_background_color", "Fundo da página", "--ax-canvas (dark)"],
+                  ["dark_surface_color", "Superfície", "--ax-surface (dark)"],
+                  ["dark_text_color", "Texto", "--ax-text (dark)"],
+                ]}
+              />
+            </>
+          )}
+
+          {tab === "experiencia" && (
+            <div className="grid gap-4">
+              <Field label="Arte de topo / banner" hint="Imagem usada em composições editoriais da Academy.">
+                <Input value={branding.banner_url ?? ""} onChange={(e) => upd("banner_url", e.target.value || null)} placeholder="https://…" />
+              </Field>
+              {branding.banner_url && (
+                <img src={branding.banner_url} alt="" className="aspect-[16/6] w-full rounded-lg object-cover" />
+              )}
+              <Field label="Título de boas-vindas">
+                <Input value={branding.welcome_title ?? ""} onChange={(e) => upd("welcome_title", e.target.value || null)} />
+              </Field>
+              <Field label="Mensagem institucional" hint="Exibida na entrada da Academy corporativa.">
+                <Textarea rows={4} value={branding.welcome_message ?? ""} onChange={(e) => upd("welcome_message", e.target.value || null)} />
+              </Field>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-6 flex items-center gap-3 border-t c-divide pt-4">
+          <Button variant="primary" onClick={save} disabled={busy || !dirty}>
+            {busy ? "Salvando…" : "Salvar marca"}
+          </Button>
+          <SaveState state={msg} />
+          {dirty && !busy && <span className="text-xs c-muted">Alterações não salvas — o preview já reflete.</span>}
         </div>
       </div>
 
-      {/* PRÉVIA — mesma composição do frontend: header, canvas, card, CTA */}
       {preview && (
-        <aside className="lg:sticky lg:top-6 self-start">
+        <aside className="xl:sticky xl:top-[84px] self-start">
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-widest brand-text-muted">Prévia</p>
-            <div className="flex overflow-hidden rounded-full border brand-border text-xs">
+            <p className="text-[11px] uppercase tracking-[0.09em] c-muted">Prévia da Academy</p>
+            <div className="flex overflow-hidden rounded-full border text-xs" style={{ borderColor: "var(--c-border)" }}>
               {(["light", "dark"] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setMode(m)}
-                  className={`px-3 py-1 ${mode === m ? "brand-surface-2 font-medium" : "brand-text-muted"}`}
+                  className="px-3 py-1"
+                  style={{
+                    background: mode === m ? "var(--c-surface-2)" : "transparent",
+                    color: mode === m ? "var(--c-text)" : "var(--c-muted)",
+                    fontWeight: mode === m ? 500 : 400,
+                  }}
                 >
                   {m === "light" ? "Claro" : "Escuro"}
                 </button>
@@ -220,56 +274,63 @@ export function BrandingEditor({ organizationId }: { organizationId: string }) {
             </div>
           </div>
 
-          <div className="mt-3 overflow-hidden rounded-xl border brand-border" style={{ background: preview.canvas, color: preview.ink }}>
+          <div
+            className="mt-3 overflow-hidden rounded-xl border"
+            style={{ background: preview.canvas, color: preview.ink, borderColor: "var(--c-border-soft)" }}
+          >
             <div
               className="flex items-center justify-between px-4 py-3 text-[13px]"
               style={{ background: preview.surface, borderBottom: `1px solid ${preview.ink}1f` }}
             >
-              <span style={{ fontWeight: 500 }}>{branding.environment_name || "Academy"}</span>
-              <span style={{ opacity: 0.6 }}>Catálogo</span>
+              <span className="flex items-center gap-2">
+                {preview.logo ? (
+                  <img src={preview.logo} alt="" className="h-5 w-auto max-w-[110px] object-contain" />
+                ) : (
+                  <span style={{ fontWeight: 500 }}>{branding.environment_name || "Academy"}</span>
+                )}
+              </span>
+              <span style={{ opacity: 0.55 }}>Catálogo</span>
             </div>
-            <div className="space-y-3 p-4">
-              <p className="text-[11px] uppercase tracking-widest" style={{ opacity: 0.6 }}>Continue estudando</p>
-              <p className="text-lg" style={{ fontWeight: 450 }}>Título de exemplo</p>
-              <p className="text-[13px]" style={{ opacity: 0.7 }}>
-                Texto secundário como aparece nas telas da Academy.
-              </p>
-              <div className="h-1 w-full overflow-hidden rounded-full" style={{ background: `${preview.ink}22` }}>
-                <div style={{ width: "45%", height: "100%", background: preview.accent }} />
-              </div>
-              <div className="flex gap-2 pt-1">
-                <span className="rounded-full px-3 py-1.5 text-[13px]" style={{ background: preview.accent, color: preview.onAccent }}>
+
+            <div
+              className="relative m-3 overflow-hidden rounded-xl"
+              style={{ background: branding.banner_url ? undefined : `${preview.ink}0f`, aspectRatio: "16/8" }}
+            >
+              {branding.banner_url && <img src={branding.banner_url} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+              <div className="absolute inset-0" style={{ background: branding.banner_url ? "rgba(0,0,0,.28)" : "transparent" }} />
+              <div className="absolute inset-0 flex flex-col justify-end gap-2 p-4" style={{ color: branding.banner_url ? "#fff" : preview.ink }}>
+                <p className="text-[15px]" style={{ fontWeight: 500 }}>{branding.welcome_title || "Continue de onde parou"}</p>
+                <p className="text-[11.5px]" style={{ opacity: 0.75 }}>
+                  {(branding.welcome_message || "Sua trilha de formação continua aqui.").slice(0, 90)}
+                </p>
+                <span className="mt-1 w-fit rounded-full px-3 py-1.5 text-[12px]" style={{ background: preview.accent, color: preview.onAccent }}>
                   Continuar
                 </span>
-                <span
-                  className="rounded-full px-3 py-1.5 text-[13px]"
-                  style={{ background: preview.surface, border: `1px solid ${preview.ink}24` }}
-                >
-                  Detalhes
-                </span>
               </div>
-              <div className="rounded-lg p-3" style={{ background: preview.surface, border: `1px solid ${preview.ink}14` }}>
-                <p className="text-[13px]" style={{ fontWeight: 500 }}>Card de curso</p>
-                <p className="text-[12px]" style={{ opacity: 0.62 }}>Categoria · 1h 20min</p>
+            </div>
+
+            <div className="space-y-2 px-4 pb-4">
+              <p className="text-[10.5px] uppercase tracking-[0.09em]" style={{ opacity: 0.55 }}>Em andamento</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[62, 18].map((p) => (
+                  <div key={p} className="rounded-lg p-2.5" style={{ background: preview.surface, border: `1px solid ${preview.ink}14` }}>
+                    <div className="mb-2 rounded" style={{ aspectRatio: "16/9", background: `${preview.ink}12` }} />
+                    <p className="text-[12px]" style={{ fontWeight: 500 }}>Curso de exemplo</p>
+                    <p className="text-[11px]" style={{ opacity: 0.6 }}>Categoria · 1h 20min</p>
+                    <div className="mt-2 h-1 overflow-hidden rounded-full" style={{ background: `${preview.ink}20` }}>
+                      <div style={{ width: `${p}%`, height: "100%", background: preview.accent }} />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-          <p className="mt-2 text-xs brand-text-muted">
-            Superfícies vêm exatamente destes campos. O destaque só aparece em ação, seleção, foco e progresso.
+          <p className="mt-2 text-[11px] c-muted">
+            As superfícies vêm exatamente destes campos. O destaque só aparece em ação, seleção, foco e progresso.
           </p>
         </aside>
       )}
     </div>
-  );
-}
-
-function Group({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <section>
-      <h3 className="text-sm font-medium uppercase tracking-widest brand-text-muted">{title}</h3>
-      {hint && <p className="mt-1 text-xs brand-text-muted">{hint}</p>}
-      <div className="mt-3">{children}</div>
-    </section>
   );
 }
 
@@ -285,23 +346,28 @@ function Colors({
   return (
     <div className="grid gap-3 sm:grid-cols-3">
       {fields.map(([key, label, hint]) => (
-        <label key={key} className="flex items-center gap-3">
-          <input
-            type="color"
-            value={branding[key]}
-            onChange={(e) => upd(key, e.target.value)}
-            className="h-10 w-12 shrink-0 rounded border brand-border bg-transparent"
-          />
-          <div className="min-w-0 flex-1">
-            <p className="text-xs">{label}</p>
-            <p className="text-[11px] brand-text-muted truncate">{hint}</p>
+        <div key={key} className="rounded-xl border p-3" style={{ borderColor: "var(--c-border-soft)" }}>
+          <div className="flex items-center gap-3">
             <input
+              type="color"
+              aria-label={label}
               value={branding[key]}
               onChange={(e) => upd(key, e.target.value)}
-              className="mt-1 w-full rounded px-2 py-1 brand-surface-2 border brand-border text-xs font-mono"
+              className="h-10 w-12 shrink-0 cursor-pointer rounded border bg-transparent"
+              style={{ borderColor: "var(--c-border)" }}
             />
+            <div className="min-w-0">
+              <p className="truncate text-xs font-medium">{label}</p>
+              <p className="truncate text-[11px] c-muted">{hint}</p>
+            </div>
           </div>
-        </label>
+          <input
+            value={branding[key]}
+            onChange={(e) => upd(key, e.target.value)}
+            aria-label={`${label} em hexadecimal`}
+            className="c-input mt-2 font-mono text-xs uppercase"
+          />
+        </div>
       ))}
     </div>
   );
