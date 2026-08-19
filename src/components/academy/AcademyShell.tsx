@@ -24,13 +24,7 @@ export function AcademyShell({
 
   return (
     <div className="academy flex min-h-screen flex-col">
-      {transparentHeader ? (
-        <div className="sticky top-0 z-50">
-          <AcademyHeader transparent />
-        </div>
-      ) : (
-        <AcademyHeader />
-      )}
+      <AcademyHeader transparent={transparentHeader} />
 
       <main className="flex-1">{children}</main>
 
