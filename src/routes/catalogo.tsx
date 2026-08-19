@@ -51,7 +51,16 @@ function Catalog() {
     [categories, courses],
   );
   const usedLevels = useMemo(
-    () => Array.from(new Set(courses.map((c) => c.level).filter(Boolean) as string[])),
+    () => {
+      const seen = new Map<string, string>();
+      for (const c of courses) {
+        const raw = c.level?.trim();
+        if (!raw) continue;
+        const label = levelLabel(raw) ?? raw;
+        if (!seen.has(label)) seen.set(label, raw);
+      }
+      return Array.from(seen, ([label, raw]) => ({ label, raw }));
+    },
     [courses],
   );
 
@@ -59,7 +68,7 @@ function Catalog() {
     const q = query.trim().toLowerCase();
     const list = courses.filter((c) => {
       if (catFilter && c.category_id !== catFilter) return false;
-      if (level && c.level !== level) return false;
+      if (level && (levelLabel(c.level) ?? c.level) !== level) return false;
       if (!q) return true;
       return `${c.title} ${c.subtitle ?? ""} ${c.instructor_name ?? ""}`.toLowerCase().includes(q);
     });
@@ -123,8 +132,8 @@ function Catalog() {
 
           <div className="flex flex-wrap items-center gap-2">
             {usedLevels.map((l) => (
-              <Chip key={l} selected={level === l} onClick={() => setLevel(level === l ? null : l)}>
-                {levelLabel(l)}
+              <Chip key={l.label} selected={level === l.label} onClick={() => setLevel(level === l.label ? null : l.label)}>
+                {l.label}
               </Chip>
             ))}
             <div className="ml-auto flex items-center gap-2">
