@@ -1295,6 +1295,7 @@ html.dark, html.dark body {
   font-size: clamp(27px, 3.1vw, 44px);
   line-height: 1.08; letter-spacing: -0.02em; font-weight: 450;
   text-shadow: 0 1px 24px rgba(0,0,0,.35);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .ax-hero-panel-meta {
   margin-top: 12px; font-size: 13px; color: rgba(247,247,248,.8);
