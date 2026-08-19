@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { ArrowRight, PlayCircle } from "lucide-react";
-import { useTenant } from "@/lib/tenant/TenantProvider";
+import { useAcademyExperience, useTenant } from "@/lib/tenant/TenantProvider";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { AcademyShell } from "@/components/academy/AcademyShell";
+import { AcademyLanding } from "@/components/academy/AcademyLanding";
 import { CourseCard } from "@/components/academy/CourseCard";
 import { CourseCoverPlaceholder } from "@/components/academy/CourseCoverPlaceholder";
 import { CardSkeletonGrid, Eyebrow, SectionHeader } from "@/components/academy/ui";
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/")({
 
 function Storefront() {
   const { tenant, loading: tenantLoading } = useTenant();
+  const exp = useAcademyExperience();
   const { session } = useAuth();
   const { loading, courses, categories, categoryNameById, ratings } = useAcademyCatalog(
     tenant?.organization.id,
@@ -40,12 +42,7 @@ function Storefront() {
   );
 
   const orgName = tenant?.organization.name ?? "Academy";
-  const envName = tenant?.branding?.environment_name ?? "Portal de conhecimento condominial";
-  const welcomeTitle =
-    tenant?.branding?.welcome_title ?? "Conhecimento vivo para quem faz o condomínio funcionar.";
-  const welcomeMsg =
-    tenant?.branding?.welcome_message ??
-    "Cursos, trilhas e materiais produzidos para síndicos, porteiros, zeladores e equipes de administradora.";
+  const isCorporate = exp.type === "corporate";
 
   const spotlight = useMemo(
     () => courses.find((c) => c.is_featured) ?? courses[0] ?? null,
@@ -59,13 +56,18 @@ function Storefront() {
 
   return (
     <AcademyShell>
-      {/* HERO COMPACTO — editorial à esquerda, conteúdo real à direita */}
-      <section className="ax-hero">
+      {/* A entrada muda com o MODELO da Academy:
+          corporate → porta institucional (quem somos, como se entra)
+          marketplace → storefront de descoberta (conteúdo primeiro) */}
+      {isCorporate ? (
+        <AcademyLanding courseCount={courses.length} />
+      ) : (
+      <section className="ax-hero" data-tone="editorial">
         <div className="ax-container grid w-full items-center gap-10 lg:grid-cols-[minmax(0,1fr)_460px]">
           <div className="ax-hero-copy">
-            <Eyebrow>{envName}</Eyebrow>
-            <h1 className="ax-display mt-3">{welcomeTitle}</h1>
-            <p className="ax-body mt-4 text-[16px]">{welcomeMsg}</p>
+            <Eyebrow>{exp.copy.eyebrow}</Eyebrow>
+            <h1 className="ax-display mt-3">{exp.copy.title}</h1>
+            <p className="ax-body mt-4 text-[16px]">{exp.copy.lead}</p>
             <div className="mt-7 flex flex-wrap items-center gap-2.5">
               <Link
                 to={session ? "/inicio" : "/login"}
@@ -77,7 +79,7 @@ function Storefront() {
                 {session ? "Continuar estudando" : "Acessar a plataforma"}
                 <ArrowRight size={16} />
               </Link>
-              <Link to="/catalogo" className="ax-btn" data-variant="secondary" data-size="lg">
+              <Link to="/catalogo" className="ax-btn" data-variant="outline" data-size="lg">
                 Ver catálogo
               </Link>
             </div>
@@ -94,7 +96,7 @@ function Storefront() {
               <Link
                 to="/curso/$courseSlug"
                 params={{ courseSlug: spotlight.slug }}
-                className="ax-hero-art block"
+                className="ax-hero-art ax-dark-band block"
                 aria-label={spotlight.title}
               >
                 {spotlight.cover_url ? (
@@ -119,6 +121,7 @@ function Storefront() {
           </div>
         </div>
       </section>
+      )}
 
       {/* DESTAQUES DO ACERVO */}
       <section className="ax-section">

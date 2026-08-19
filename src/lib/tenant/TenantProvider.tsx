@@ -2,15 +2,22 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import type { ResolvedTenant } from "./types";
-import { accentContrastInk } from "./accent";
+import { accentContrastInk, accentLuminance } from "./accent";
+import { resolveAcademyExperience, type AcademyExperience } from "./experience";
 
 type Ctx = {
   tenant: ResolvedTenant | null;
   loading: boolean;
+  experience: AcademyExperience;
   overrideSlug: (slug: string | null) => void;
 };
 
-const TenantContext = createContext<Ctx>({ tenant: null, loading: true, overrideSlug: () => {} });
+const TenantContext = createContext<Ctx>({
+  tenant: null,
+  loading: true,
+  experience: resolveAcademyExperience(null),
+  overrideSlug: () => {},
+});
 
 const OVERRIDE_KEY = "academy.tenantOverride";
 
@@ -46,6 +53,21 @@ function applyBrandingVars(t: ResolvedTenant | null) {
   // CAMADA 2 → só accent. A tinta legível sobre ele é CALCULADA: um tenant
   // não pode configurar um CTA invisível (amarelo + branco, p. ex.).
   root.style.setProperty("--tenant-accent-contrast", accentContrastInk(b.accent_color));
+
+  // CAMADA 2 (profunda): a marca também define a ESTRATÉGIA NEUTRA do tema
+  // claro — canvas, superfície e tinta. Só aceitamos valores que preservem o
+  // light-first: um background escuro configurado pelo tenant não sequestra o
+  // tema claro, vira apenas intensidade de tinta.
+  const bgLum = accentLuminance(b.background_color);
+  const surfLum = accentLuminance(b.surface_color);
+  const textLum = accentLuminance(b.text_color);
+  root.style.setProperty("--tenant-canvas-base", bgLum > 0.6 ? b.background_color : "#F6F6F4");
+  root.style.setProperty("--tenant-surface-base", surfLum > 0.7 ? b.surface_color : "#FFFFFF");
+  root.style.setProperty("--tenant-ink-base", textLum < 0.18 ? b.text_color : "#17171B");
+  // Marcas de acento muito saturado/claro precisam de tinta menor para não
+  // "lavar" o canvas; marcas discretas podem tingir um pouco mais.
+  const accLum = accentLuminance(b.accent_color);
+  root.style.setProperty("--tenant-tint-strength", accLum > 0.55 ? "3%" : "5%");
   if (b.environment_name) document.title = b.environment_name;
   if (b.favicon_url) {
     let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");
@@ -161,12 +183,17 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     void resolve();
   }, [resolve]);
 
+  const experience = useMemo(() => resolveAcademyExperience(tenant), [tenant]);
+
   const value = useMemo(
-    () => ({ tenant, loading: !resolved || correcting || pendingCorrection, overrideSlug }),
-    [tenant, resolved, correcting, pendingCorrection, overrideSlug],
+    () => ({ tenant, loading: !resolved || correcting || pendingCorrection, experience, overrideSlug }),
+    [tenant, resolved, correcting, pendingCorrection, experience, overrideSlug],
   );
 
   return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>;
 }
 
 export function useTenant() { return useContext(TenantContext); }
+
+/** Modelo comercial da Academy atual (marketplace vs corporativo). */
+export function useAcademyExperience() { return useContext(TenantContext).experience; }

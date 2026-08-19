@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Building2, LogOut, Search, Shield, User } from "lucide-react";
+import { Building2, LogOut, Monitor, Moon, Search, Shield, Sun, User } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useTenantIdentity } from "@/lib/tenant/useTenantIdentity";
+import { useTheme, type ThemeChoice } from "@/lib/theme/ThemeProvider";
 import { TenantLogo } from "./TenantLogo";
 
 /**
@@ -68,12 +69,52 @@ export function AcademyHeader({ transparent = false }: { transparent?: boolean }
             onSignOut={signOut}
           />
         ) : (
-          <Link to="/login" search={{ next: "/inicio" }} className="ax-btn shrink-0" data-variant="primary">
-            Entrar
-          </Link>
+          <>
+            <ThemeToggle />
+            <Link to="/login" search={{ next: "/inicio" }} className="ax-btn shrink-0" data-variant="primary">
+              Entrar
+            </Link>
+          </>
         )}
       </div>
     </header>
+  );
+}
+
+/** Alternância de tema: claro é o padrão, escuro é preferência do usuário. */
+function ThemeToggle({ full = false }: { full?: boolean }) {
+  const { choice, setChoice } = useTheme();
+  const options: { value: ThemeChoice; label: string; icon: React.ReactNode }[] = [
+    { value: "light", label: "Claro", icon: <Sun size={14} /> },
+    { value: "dark", label: "Escuro", icon: <Moon size={14} /> },
+    { value: "system", label: "Sistema", icon: <Monitor size={14} /> },
+  ];
+  return (
+    <div
+      className={`${full ? "flex w-full" : "hidden sm:flex"} shrink-0 items-center gap-0.5 rounded-full p-0.5`}
+      style={{ background: "var(--ax-veil)" }}
+      role="group"
+      aria-label="Tema da interface"
+    >
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => setChoice(o.value)}
+          aria-pressed={choice === o.value}
+          title={o.label}
+          className={`inline-flex ${full ? "flex-1 justify-center" : ""} items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[12px] transition`}
+          style={
+            choice === o.value
+              ? { background: "var(--ax-surface)", color: "var(--ax-text)", boxShadow: "var(--ax-shadow-sm)" }
+              : { color: "var(--ax-text-tertiary)" }
+          }
+        >
+          {o.icon}
+          {full && o.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -127,6 +168,10 @@ function AccountMenu({
         >
           <p className="ax-meta truncate px-3 py-2">{email}</p>
           <div className="ax-divider my-1" />
+          <div className="px-1.5 pb-1.5 pt-0.5">
+            <ThemeToggle full />
+          </div>
+          <div className="ax-divider my-1" />
           <MenuLink to="/inicio" onClick={() => setOpen(false)} icon={<User size={15} />}>
             Meus estudos
           </MenuLink>
@@ -150,7 +195,7 @@ function AccountMenu({
               setOpen(false);
               void onSignOut();
             }}
-            className="flex w-full items-center gap-2.5 rounded-[10px] px-3 py-2 text-left text-[14px] transition hover:bg-white/8"
+            className="ax-menuitem flex w-full items-center gap-2.5 rounded-[10px] px-3 py-2 text-left text-[14px] transition"
             style={{ color: "var(--ax-text-secondary)" }}
           >
             <LogOut size={15} /> Sair
@@ -177,7 +222,7 @@ function MenuLink({
       to={to as any}
       role="menuitem"
       onClick={onClick}
-      className="flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-[14px] transition hover:bg-white/8"
+      className="ax-menuitem flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-[14px] transition"
       style={{ color: "var(--ax-text)" }}
     >
       {icon}

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { useAcademyExperience } from "@/lib/tenant/TenantProvider";
 import { AcademyShell } from "@/components/academy/AcademyShell";
 import { Eyebrow } from "@/components/academy/ui";
 import { CourseReviews } from "@/components/course/CourseReviews";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/curso/$courseSlug")({ ssr: false, compone
 function CoursePage() {
   const { courseSlug } = useParams({ from: "/curso/$courseSlug" });
   const { session, isPlatformAdmin } = useAuth();
+  const exp = useAcademyExperience();
   const [course, setCourse] = useState<any>(null);
   const [modules, setModules] = useState<any[]>([]);
   const [hasAccess, setHasAccess] = useState(false);
@@ -95,7 +97,7 @@ function CoursePage() {
   ].filter(Boolean);
   const primaryCta = !session ? (
     <Link to="/login" search={{ next: `/curso/${courseSlug}` }} className="ax-btn" data-variant="primary" data-size="lg">
-      Entrar para começar
+      {exp.type === "corporate" ? "Entrar na Academy" : "Entrar para começar"}
     </Link>
   ) : hasAccess ? (
     <Link
@@ -125,9 +127,14 @@ function CoursePage() {
   );
 
   return (
-    <AcademyShell transparentHeader>
+    <AcademyShell>
       {/* HERO COMPACTO DO CURSO — capa real ao fundo, sem player embutido */}
-      <section className="ax-hero" style={{ marginTop: "calc(-1 * var(--ax-header-h))", paddingTop: "calc(var(--ax-header-h) + 32px)" }}>
+      {/* A capa é imagem cheia: esta faixa lê como superfície escura em
+          qualquer tema, para o texto continuar legível sobre a arte. */}
+      <section
+        className="ax-hero ax-dark-band"
+        style={{ marginTop: "calc(-1 * var(--ax-header-h))", paddingTop: "calc(var(--ax-header-h) + 32px)" }}
+      >
         <div className="ax-hero-media">
           {course.cover_url ? (
             <img src={course.cover_url} alt="" aria-hidden fetchPriority="high" />
@@ -150,12 +157,12 @@ function CoursePage() {
             )}
             <div className="mt-6 flex flex-wrap items-center gap-2.5">
               {primaryCta}
-              <Link to="/catalogo" className="ax-btn" data-variant="secondary" data-size="lg">
+              <Link to="/catalogo" className="ax-btn" data-variant="outline" data-size="lg">
                 Voltar ao catálogo
               </Link>
             </div>
             {!hasAccess && session && !inCatalog && !isPlatformAdmin && !course.external_checkout_url && (
-              <p className="ax-meta mt-3">Curso indisponível no catálogo da sua organização.</p>
+              <p className="ax-meta mt-3">{exp.copy.gated}</p>
             )}
             {enrollError && (
               <p className="mt-2 text-[13px]" style={{ color: "var(--ax-error)" }}>
