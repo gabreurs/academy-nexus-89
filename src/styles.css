@@ -85,8 +85,9 @@
 
 /* ---------- Base ---------- */
 html, body {
-  background: var(--brand-bg);
-  color: var(--brand-text);
+  /* Fundo da página = token do tenant (painel de marca). Sem derivação. */
+  background: var(--tenant-canvas-light, #FFFFFF);
+  color: var(--tenant-ink-light, #121214);
   font-family: "Mona Sans", "InterLocal", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
@@ -98,6 +99,11 @@ html, body {
 /* Lenis (importado dinamicamente) — hooks básicos */
 html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
+
+html.dark, html.dark body {
+  background: var(--tenant-canvas-dark, #0B0B0E);
+  color: var(--tenant-ink-dark, #F3F3F5);
+}
 .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
 
 /* ---------- Classes utilitárias legadas (mantém compat com componentes existentes) ---------- */
