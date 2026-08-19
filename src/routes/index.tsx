@@ -216,7 +216,7 @@ function Storefront() {
           corporate → porta institucional (quem somos, como se entra)
           marketplace → storefront de descoberta (conteúdo primeiro) */}
       {isCorporate ? (
-        <AcademyLanding courseCount={courses.length} />
+        <AcademyLanding courseCount={courses.length} courses={courses} />
       ) : (
       <section className="ax-hero" data-tone="editorial">
         <div className="ax-container grid w-full items-center gap-10 lg:grid-cols-[minmax(0,1fr)_460px]">
