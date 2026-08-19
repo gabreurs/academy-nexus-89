@@ -1218,3 +1218,76 @@ html.lenis, html.lenis body { height: auto; }
 }
 
 .ax-menuitem:hover { background: var(--ax-veil); }
+
+/* ============================================================
+   HERO CINEMATOGRÁFICO DE RETOMADA (home autenticada).
+   Bloco editorial imersivo derivado da ARTE DO CURSO — não do
+   accent do tenant. Vive dentro de uma interface light-first.
+   ============================================================ */
+.ax-cinehero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  min-height: 460px;
+  color: #F4F4F6;
+  background: #0B0B0E;
+}
+@media (min-width: 1024px) { .ax-cinehero { min-height: 540px; } }
+@media (min-width: 1536px) { .ax-cinehero { min-height: 600px; } }
+
+/* plano de fundo desfocado: salva capas de baixa resolução */
+.ax-cinehero-bg {
+  position: absolute; inset: -6%; z-index: -3;
+  background-size: cover; background-position: center;
+  filter: blur(38px) saturate(115%) brightness(.62);
+  transform: scale(1.06);
+}
+/* arte nítida, crop controlado, sem esticar */
+.ax-cinehero-art {
+  position: absolute; inset: 0; z-index: -2;
+  background-size: cover; background-position: center 32%;
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.35) 26%, #000 62%);
+}
+.ax-cinehero-scrim {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(8,8,11,.94) 0%, rgba(8,8,11,.78) 38%, rgba(8,8,11,.28) 68%, rgba(8,8,11,.1) 100%),
+    linear-gradient(0deg, var(--ax-canvas) 0%, rgba(8,8,11,.55) 26%, transparent 62%),
+    radial-gradient(120% 90% at 50% 45%, transparent 52%, rgba(0,0,0,.35) 100%);
+}
+.ax-cinehero-copy { max-width: 620px; padding-block: 44px; }
+@media (min-width: 1024px) { .ax-cinehero-copy { padding-block: 64px; } }
+.ax-cinehero-title {
+  font-size: clamp(30px, 4.2vw, 54px);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-weight: 450;
+}
+.ax-cinehero-lead {
+  color: rgba(244,244,246,.82);
+  font-size: 15px; line-height: 1.55;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* glass pontual: metadata e painel de progresso apenas */
+.ax-cinehero-glass {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.16);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  color: rgba(244,244,246,.9);
+}
+.ax-cinehero-progress {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.16);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-radius: var(--ax-r-md);
+  padding: 12px 14px;
+  max-width: 340px;
+}
+.ax-cinehero-bar { height: 4px; border-radius: 999px; background: rgba(255,255,255,.22); overflow: hidden; }
+.ax-cinehero-bar > i { display: block; height: 100%; background: var(--tenant-accent); }
+@media (prefers-reduced-motion: reduce) { .ax-cinehero-bg { transform: none; } }
