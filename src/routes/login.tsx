@@ -40,15 +40,15 @@ function LoginPage() {
 
   return (
     <div className="academy flex min-h-screen items-center justify-center p-6">
-      <div className="academy-surface academy-border w-full max-w-md rounded-3xl border p-8">
+      <div className="ax-panel w-full max-w-md p-8">
         <div className="flex items-center justify-between gap-4">
           <TenantLogo />
-          <Link to="/" className="academy-subtle text-sm hover:opacity-80">← Voltar</Link>
+          <Link to="/" className="ax-meta hover:opacity-80">← Voltar</Link>
         </div>
-        <h1 className="mt-7 text-[26px] font-semibold" style={{ letterSpacing: "-0.03em" }}>
+        <h1 className="ax-h2 mt-7">
           {mode === "login" ? "Entrar na Academy" : "Criar sua conta"}
         </h1>
-        <p className="academy-muted mt-1.5 text-sm">
+        <p className="ax-body mt-1.5 text-[14px]">
           {mode === "login" ? "Acesse seus cursos e continue de onde parou." : "Leva menos de um minuto."}
         </p>
         <form onSubmit={submit} className="mt-7 space-y-3">
@@ -56,13 +56,13 @@ function LoginPage() {
             className="w-full px-4 py-3 text-[15px]" />
           <input type="password" required minLength={6} placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-3 text-[15px]" />
-          <button disabled={busy} type="submit" className="academy-cta w-full">
+          <button disabled={busy} type="submit" className="ax-btn w-full" data-variant="primary" data-size="lg">
             {busy ? "…" : mode === "login" ? "Entrar" : "Criar conta"}
           </button>
         </form>
         <button
           onClick={() => setMode(mode === "login" ? "signup" : "login")}
-          className="academy-muted mt-5 text-sm hover:opacity-80"
+          className="ax-btn mt-5" data-variant="link"
         >
           {mode === "login" ? "Não tem conta? Criar conta" : "Já tenho conta"}
         </button>

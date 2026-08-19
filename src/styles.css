@@ -1054,3 +1054,55 @@ html.lenis, html.lenis body { height: auto; }
   padding: 44px 24px;
   text-align: center;
 }
+
+/* ============================================================
+   HERO COMPACTO (Camada 1) — usado em / e em /curso/:slug.
+   Altura contida (420–520px) para que o conteúdo comece cedo.
+   ============================================================ */
+.ax-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  padding-block: 40px;
+}
+@media (min-width: 1024px) { .ax-hero { min-height: 480px; } }
+@media (min-width: 1536px) { .ax-hero { min-height: 520px; } }
+.ax-hero-media { position: absolute; inset: 0; z-index: -2; }
+.ax-hero-media img { height: 100%; width: 100%; object-fit: cover; display: block; }
+.ax-hero-scrim {
+  position: absolute; inset: 0; z-index: -1;
+  background:
+    linear-gradient(90deg, var(--ax-canvas) 8%, color-mix(in oklab, var(--ax-canvas) 74%, transparent) 52%, transparent 92%),
+    linear-gradient(0deg, var(--ax-canvas) 2%, transparent 60%);
+}
+.ax-hero-copy { max-width: 620px; }
+.ax-hero-art {
+  position: relative;
+  border-radius: var(--ax-r-lg);
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: var(--ax-surface-raised);
+  box-shadow: var(--ax-shadow-lg);
+}
+.ax-hero-art img { height: 100%; width: 100%; object-fit: cover; display: block; }
+
+/* rodapé global */
+.ax-footer {
+  border-top: 1px solid var(--ax-border-subtle);
+  background: var(--ax-surface);
+  color: var(--ax-text-tertiary);
+  font-size: 13px;
+}
+
+/* faixa de categorias / links secos */
+.ax-tile {
+  display: block;
+  border-radius: var(--ax-r-md);
+  background: var(--ax-surface);
+  padding: 16px;
+  transition: background .16s ease, transform .16s ease;
+}
+.ax-tile:hover { background: var(--ax-surface-hover); }

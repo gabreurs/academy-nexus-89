@@ -2,8 +2,8 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { AcademyHeader } from "@/components/academy/AcademyHeader";
-import { TenantDemoSwitcher } from "@/components/site/TenantDemoSwitcher";
+import { AcademyShell } from "@/components/academy/AcademyShell";
+import { Eyebrow } from "@/components/academy/ui";
 import { CourseReviews } from "@/components/course/CourseReviews";
 import { CourseCoverPlaceholder } from "@/components/academy/CourseCoverPlaceholder";
 import { durationLabel, levelLabel } from "@/components/academy/types";
@@ -74,39 +74,105 @@ function CoursePage() {
 
   if (loading)
     return (
-      <div className="academy">
-        <AcademyHeader />
-        <div className="academy-container py-16">
-          <div className="academy-skeleton aspect-video max-w-3xl rounded-2xl" />
+      <AcademyShell>
+        <div className="ax-container py-16">
+          <div className="ax-skeleton aspect-video max-w-3xl" />
         </div>
-      </div>
+      </AcademyShell>
     );
   if (!course)
     return (
-      <div className="academy">
-        <AcademyHeader />
-        <p className="academy-container py-20 text-lg">Curso não encontrado.</p>
-      </div>
+      <AcademyShell>
+        <p className="ax-container py-20 text-lg">Curso não encontrado.</p>
+      </AcademyShell>
     );
 
   const isEmbedCourse = course.delivery_type === "learning_studio_embed";
+  const meta = [
+    levelLabel(course.level),
+    durationLabel(course.duration_minutes),
+    course.instructor_name,
+  ].filter(Boolean);
+  const primaryCta = !session ? (
+    <Link to="/login" search={{ next: `/curso/${courseSlug}` }} className="ax-btn" data-variant="primary" data-size="lg">
+      Entrar para começar
+    </Link>
+  ) : hasAccess ? (
+    <Link
+      to="/curso/$courseSlug/aprender"
+      params={{ courseSlug }}
+      className="ax-btn"
+      data-variant="primary"
+      data-size="lg"
+    >
+      Continuar curso
+    </Link>
+  ) : course.external_checkout_url ? (
+    <a
+      href={course.external_checkout_url}
+      target="_blank"
+      rel="noopener"
+      className="ax-btn"
+      data-variant="primary"
+      data-size="lg"
+    >
+      Comprar acesso
+    </a>
+  ) : !inCatalog && !isPlatformAdmin ? null : (
+    <button onClick={enroll} className="ax-btn" data-variant="primary" data-size="lg">
+      Iniciar curso
+    </button>
+  );
 
   return (
-    <div className="academy">
-      <AcademyHeader />
-      <main className="academy-container grid gap-10 pb-24 pt-10 lg:grid-cols-3">
+    <AcademyShell transparentHeader>
+      {/* HERO COMPACTO DO CURSO — capa real ao fundo, sem player embutido */}
+      <section className="ax-hero" style={{ marginTop: "calc(-1 * var(--ax-header-h))", paddingTop: "calc(var(--ax-header-h) + 32px)" }}>
+        <div className="ax-hero-media">
+          {course.cover_url ? (
+            <img src={course.cover_url} alt="" aria-hidden fetchPriority="high" />
+          ) : (
+            <CourseCoverPlaceholder title={course.title} showTitle={false} className="h-full w-full" />
+          )}
+        </div>
+        <div className="ax-hero-scrim" aria-hidden />
+        <div className="ax-container w-full">
+          <div className="ax-hero-copy">
+            <Eyebrow>{isEmbedCourse ? "Curso interativo" : "Curso"}</Eyebrow>
+            <h1 className="ax-h1 mt-3">{course.title}</h1>
+            {course.subtitle && <p className="ax-body mt-3 text-[16px]">{course.subtitle}</p>}
+            {meta.length > 0 && (
+              <div className="ax-meta mt-4 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                {meta.map((m, i) => (
+                  <span key={i}>{m}</span>
+                ))}
+              </div>
+            )}
+            <div className="mt-6 flex flex-wrap items-center gap-2.5">
+              {primaryCta}
+              <Link to="/catalogo" className="ax-btn" data-variant="secondary" data-size="lg">
+                Voltar ao catálogo
+              </Link>
+            </div>
+            {!hasAccess && session && !inCatalog && !isPlatformAdmin && !course.external_checkout_url && (
+              <p className="ax-meta mt-3">Curso indisponível no catálogo da sua organização.</p>
+            )}
+            {enrollError && (
+              <p className="mt-2 text-[13px]" style={{ color: "var(--ax-error)" }}>
+                {enrollError}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <div className="ax-container grid gap-10 pb-20 pt-10 lg:grid-cols-3">
         <div className="lg:col-span-2">
           {isEmbedCourse ? (
             // Nenhum iframe nesta tela: nem oculto, nem fora da viewport, nem
             // atrás de overlay. O LearningStudio só carrega no ambiente de
             // estudo, após o gate de acesso.
-            <div className="academy-border relative aspect-video overflow-hidden rounded-2xl border">
-              {course.cover_url ? (
-                <img src={course.cover_url} alt={course.title} className="w-full h-full object-cover" />
-              ) : (
-                <CourseCoverPlaceholder title={course.title} showTitle={false} className="absolute inset-0 h-full w-full" />
-              )}
-            </div>
+            null
           ) : (
             (() => {
               const preview = modules
@@ -114,32 +180,22 @@ function CoursePage() {
                 .find((l: any) => l.is_preview && l.video_url);
               // Nunca usamos o conteúdo completo como "degustação": só entra
               // aqui a aula explicitamente marcada como prévia.
-              if (!preview) {
-                return (
-                  <div className="academy-border relative aspect-video overflow-hidden rounded-2xl border">
-                    {course.cover_url ? (
-                      <img src={course.cover_url} alt={course.title} className="h-full w-full object-cover" />
-                    ) : (
-                      <CourseCoverPlaceholder title={course.title} showTitle={false} className="absolute inset-0 h-full w-full" />
-                    )}
-                  </div>
-                );
-              }
+              if (!preview) return null;
               if (!showPreview) {
                 return (
                   <button
                     onClick={() => setShowPreview(true)}
-                    className="academy-surface-2 academy-border flex aspect-video w-full flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border transition hover:opacity-90"
+                    className="ax-panel-raised flex aspect-video w-full flex-col items-center justify-center gap-2 overflow-hidden transition hover:opacity-90"
                   >
                     <span className="text-4xl">▶</span>
-                    <span className="academy-muted text-sm">
+                    <span className="ax-meta">
                       {hasAccess ? "Assistir prévia da aula" : "Assistir prévia gratuita (2 min)"}
                     </span>
                   </button>
                 );
               }
               return (
-                <div className="academy-surface-2 academy-border h-[70vh] min-h-[440px] w-full overflow-hidden rounded-2xl border">
+                <div className="ax-panel-raised h-[70vh] min-h-[440px] w-full overflow-hidden">
                   <LessonMedia
                     videoUrl={preview.video_url}
                     requireStart
@@ -151,23 +207,17 @@ function CoursePage() {
             })()
           )}
 
-          <h1 className="mt-7 text-[28px] font-semibold leading-tight md:text-[38px]" style={{ letterSpacing: "-0.03em" }}>
-            {course.title}
-          </h1>
-          {course.subtitle && <p className="academy-muted mt-2 text-[16px]">{course.subtitle}</p>}
-          <div className="academy-subtle mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px]">
-            {[levelLabel(course.level), durationLabel(course.duration_minutes), course.instructor_name]
-              .filter(Boolean)
-              .map((m, i) => (
-                <span key={i}>{i > 0 ? `· ${m}` : m}</span>
-              ))}
-          </div>
-          <p className="mt-6 max-w-[70ch] leading-relaxed" style={{ color: "#D4D4D4" }}>{course.description}</p>
+          {course.description && (
+            <>
+              <h2 className="ax-h2">Sobre o curso</h2>
+              <p className="ax-body mt-3">{course.description}</p>
+            </>
+          )}
 
           {isEmbedCourse ? (
-            <div className="academy-surface academy-border mt-10 rounded-2xl border p-6">
-              <h2 className="text-lg font-semibold">Como este curso funciona</h2>
-              <p className="academy-muted mt-2 text-sm leading-relaxed">
+            <div className="ax-panel mt-8 p-6">
+              <h3 className="ax-h3">Como este curso funciona</h3>
+              <p className="ax-body mt-2 text-[14px]">
                 Curso interativo: as aulas, atividades e verificações acontecem dentro do
                 ambiente de estudo, em tela cheia se você quiser. Materiais complementares,
                 discussão e avaliação ficam no painel lateral do ambiente.
@@ -175,16 +225,20 @@ function CoursePage() {
             </div>
           ) : (
             <>
-              <h2 className="mt-10 text-lg font-semibold">Conteúdo do curso</h2>
+              <h3 className="ax-h3 mt-9">Conteúdo do curso</h3>
               <div className="mt-4 space-y-4">
                 {modules.map((m) => (
-                  <div key={m.id} className="academy-surface academy-border overflow-hidden rounded-2xl border">
+                  <div key={m.id} className="ax-panel overflow-hidden">
                     <div className="p-4 font-medium">{m.title}</div>
-                    <ul className="academy-border border-t">
+                    <ul style={{ borderTop: "1px solid var(--ax-border-subtle)" }}>
                       {(m.course_lessons ?? []).sort((a: any, b: any) => a.sort_order - b.sort_order).map((l: any) => (
-                        <li key={l.id} className="academy-border flex items-center justify-between border-t px-4 py-3 text-sm">
+                        <li
+                          key={l.id}
+                          className="flex items-center justify-between px-4 py-3 text-sm"
+                          style={{ borderTop: "1px solid var(--ax-border-subtle)" }}
+                        >
                           <span>{l.title}</span>
-                          <span className="academy-subtle text-xs">{Math.round((l.duration_seconds ?? 0) / 60)}min {l.is_preview && "· prévia"}</span>
+                          <span className="ax-meta">{Math.round((l.duration_seconds ?? 0) / 60)}min {l.is_preview && "· prévia"}</span>
                         </li>
                       ))}
                     </ul>
@@ -197,31 +251,18 @@ function CoursePage() {
           <CourseReviews courseId={course.id} canReview={hasAccess} />
         </div>
 
-        <aside className="academy-surface academy-border sticky top-24 h-fit rounded-2xl border p-6">
-          <p className="academy-subtle text-[11px] uppercase tracking-[0.18em]">{levelLabel(course.level) ?? "Curso"}</p>
+        <aside className="ax-panel sticky top-[calc(var(--ax-header-h)+16px)] h-fit p-6">
+          <p className="ax-eyebrow">{levelLabel(course.level) ?? "Curso"}</p>
           {course.instructor_name && <p className="mt-2 font-medium">{course.instructor_name}</p>}
           {course.duration_minutes ? (
-            <p className="academy-muted text-sm">{durationLabel(course.duration_minutes)} de conteúdo</p>
+            <p className="ax-meta mt-1">{durationLabel(course.duration_minutes)} de conteúdo</p>
           ) : null}
-          <div className="mt-6 space-y-2">
-            {!session ? (
-              <Link to="/login" search={{ next: `/curso/${courseSlug}` }} className="academy-cta w-full">Entrar para começar</Link>
-            ) : hasAccess ? (
-              <Link to="/curso/$courseSlug/aprender" params={{ courseSlug }} className="academy-cta w-full">Continuar curso</Link>
-            ) : course.external_checkout_url ? (
-              <a href={course.external_checkout_url} target="_blank" rel="noopener" className="academy-cta w-full">Comprar acesso</a>
-            ) : !inCatalog && !isPlatformAdmin ? (
-              <div className="academy-border academy-muted rounded-xl border py-3 text-center text-sm">
-                Curso indisponível no catálogo da sua organização.
-              </div>
-            ) : (
-              <button onClick={enroll} className="academy-cta w-full">Iniciar curso</button>
-            )}
-            {enrollError && <p className="mt-2 text-xs" style={{ color: "#FCA5A5" }}>{enrollError}</p>}
-          </div>
+          <div className="mt-6">{primaryCta}</div>
+          {!hasAccess && session && !inCatalog && !isPlatformAdmin && !course.external_checkout_url && (
+            <p className="ax-meta mt-3">Curso indisponível no catálogo da sua organização.</p>
+          )}
         </aside>
-      </main>
-      <TenantDemoSwitcher />
-    </div>
+      </div>
+    </AcademyShell>
   );
 }
