@@ -819,9 +819,9 @@ html.lenis, html.lenis body { height: auto; }
      ------------------------------------------------------------------ */
   /* Valores CONFIGURADOS pelo tenant (painel de marca → TenantProvider).
      Nenhuma superfície principal é derivada do accent. */
-  --tenant-canvas-base:    #FFFFFF;
-  --tenant-surface-base:   #FFFFFF;
-  --tenant-ink-base:       #121214;
+  --tenant-canvas-base:    var(--tenant-canvas-light, #FFFFFF);
+  --tenant-surface-base:   var(--tenant-surface-light, #FFFFFF);
+  --tenant-ink-base:       var(--tenant-ink-light, #121214);
 
   --ax-canvas:           var(--tenant-canvas-base);
   --ax-surface:          var(--tenant-surface-base);

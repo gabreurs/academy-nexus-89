@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import type { ResolvedTenant } from "./types";
+import type { Branding, ResolvedTenant } from "./types";
 import { accentContrastInk } from "./accent";
 import { resolveAcademyExperience, type AcademyExperience } from "./experience";
 
@@ -142,7 +142,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     const t = await loadTenant({ slug, hostname: host });
     if (gen !== genRef.current) return;
     setTenant(t);
-    applyBrandingVars(t);
+    applyTenant(t);
     setResolved(true);
   }, []);
 
