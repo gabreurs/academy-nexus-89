@@ -164,9 +164,11 @@ function AdminPage() {
     refresh();
   };
 
-  const updateOrg = async (orgId: string, patch: Record<string, unknown>) => {
+  type OrgPatch = Partial<Pick<Org, "name" | "slug" | "status">> & { user_limit?: number | null };
+
+  const updateOrg = async (orgId: string, patch: OrgPatch) => {
     setMsg({ kind: "busy", text: "" });
-    const { error } = await supabase.from("organizations").update(patch).eq("id", orgId);
+    const { error } = await supabase.from("organizations").update(patch as never).eq("id", orgId);
     setMsg(error ? { kind: "err", text: error.message } : { kind: "ok", text: "Alterações salvas." });
     refresh();
   };
@@ -548,7 +550,7 @@ function OrgDetail({
 }: {
   org: Org; seats: number; domains: Domain[]; courses: Course[]; catalog: Set<string>;
   catalogLoading: boolean; courseQuery: string; setCourseQuery: (v: string) => void;
-  onToggleCatalog: (id: string) => void; onBack: () => void; onUpdate: (patch: Record<string, unknown>) => void;
+  onToggleCatalog: (id: string) => void; onBack: () => void; onUpdate: (patch: { name?: string; slug?: string; status?: Org["status"]; user_limit?: number | null }) => void;
   newDomain: string; setNewDomain: (v: string) => void; onAddDomain: () => void;
   onRemoveDomain: (id: string) => void; onSetPrimary: (id: string) => void;
   msg: null | { kind: "ok" | "err" | "busy"; text: string };
