@@ -207,8 +207,12 @@ function CoursePage() {
             })()
           )}
 
-          <h2 className="ax-h2">Sobre o curso</h2>
-          <p className="ax-body mt-3">{course.description}</p>
+          {course.description && (
+            <>
+              <h2 className="ax-h2">Sobre o curso</h2>
+              <p className="ax-body mt-3">{course.description}</p>
+            </>
+          )}
 
           {isEmbedCourse ? (
             <div className="ax-panel mt-8 p-6">
