@@ -810,36 +810,52 @@ html.lenis, html.lenis body { height: auto; }
    personalidade, sem recolorir o produto.
    ============================================================ */
 .academy {
-  /* --- surfaces (profundidade real, não um único preto) --- */
-  --ax-canvas:           color-mix(in oklab, var(--tenant-accent) 3%,  #0A0A0C);
-  --ax-surface:          color-mix(in oklab, var(--tenant-accent) 4%,  #111114);
-  --ax-surface-raised:   color-mix(in oklab, var(--tenant-accent) 5%,  #17171B);
-  --ax-surface-hover:    color-mix(in oklab, var(--tenant-accent) 8%,  #1E1E23);
-  --ax-surface-selected: color-mix(in oklab, var(--tenant-accent) 16%, #1E1E23);
-  --ax-surface-inverse:  #F5F5F7;
+  /* ------------------------------------------------------------------
+     LIGHT-FIRST. O tema claro é a experiência primária do produto.
+     A estratégia neutra é do TENANT: --tenant-canvas-base /
+     --tenant-surface-base / --tenant-tint-strength são escritos pelo
+     TenantProvider a partir do branding. O fallback abaixo é o neutro
+     editorial padrão da plataforma.
+     ------------------------------------------------------------------ */
+  --tenant-canvas-base:    #F6F6F4;
+  --tenant-surface-base:   #FFFFFF;
+  --tenant-tint-strength:  4%;
+  --tenant-ink-base:       #17171B;
 
-  --ax-border-subtle:  rgba(255,255,255,.06);
-  --ax-border:         rgba(255,255,255,.10);
-  --ax-border-strong:  rgba(255,255,255,.18);
+  --ax-canvas:           color-mix(in oklab, var(--tenant-accent) var(--tenant-tint-strength), var(--tenant-canvas-base));
+  --ax-surface:          color-mix(in oklab, var(--tenant-accent) calc(var(--tenant-tint-strength) / 4), var(--tenant-surface-base));
+  --ax-surface-raised:   color-mix(in oklab, var(--tenant-accent) calc(var(--tenant-tint-strength) / 1.6), #F1F1EF);
+  --ax-surface-hover:    color-mix(in oklab, var(--tenant-accent) calc(var(--tenant-tint-strength) * 1.6), #EAEAE7);
+  --ax-surface-selected: color-mix(in oklab, var(--tenant-accent) 18%, #FFFFFF);
+  --ax-surface-inverse:  #121215;
+  --ax-surface-brand:    color-mix(in oklab, var(--tenant-accent) 14%, var(--tenant-surface-base));
 
-  --ax-text:           #F4F4F6;
-  --ax-text-secondary: #B4B4BD;
-  --ax-text-tertiary:  #8A8A95;
-  --ax-text-disabled:  #5B5B64;
+  --ax-veil:        color-mix(in oklab, var(--tenant-ink-base) 5%, transparent);
+  --ax-veil-strong: color-mix(in oklab, var(--tenant-ink-base) 10%, transparent);
 
-  --ax-success: #4ADE80;
-  --ax-warning: #FBBF24;
-  --ax-error:   #F87171;
-  --ax-info:    #7DD3FC;
+  --ax-border-subtle:  color-mix(in oklab, var(--tenant-ink-base) 9%, transparent);
+  --ax-border:         color-mix(in oklab, var(--tenant-ink-base) 14%, transparent);
+  --ax-border-strong:  color-mix(in oklab, var(--tenant-ink-base) 24%, transparent);
+
+  --ax-text:           var(--tenant-ink-base);
+  --ax-text-secondary: color-mix(in oklab, var(--tenant-ink-base) 66%, #FFFFFF);
+  --ax-text-tertiary:  color-mix(in oklab, var(--tenant-ink-base) 48%, #FFFFFF);
+  --ax-text-disabled:  color-mix(in oklab, var(--tenant-ink-base) 32%, #FFFFFF);
+  --ax-on-accent:      var(--tenant-accent-contrast);
+
+  --ax-success: #157F4B;
+  --ax-warning: #A66A00;
+  --ax-error:   #C0392B;
+  --ax-info:    #1B6FA8;
 
   --ax-r-sm: 8px;
   --ax-r-md: 12px;
   --ax-r-lg: 16px;
   --ax-r-xl: 22px;
 
-  --ax-shadow-sm: 0 1px 2px rgba(0,0,0,.4);
-  --ax-shadow-md: 0 8px 24px rgba(0,0,0,.42);
-  --ax-shadow-lg: 0 24px 64px rgba(0,0,0,.5);
+  --ax-shadow-sm: 0 1px 2px rgba(17,17,20,.05);
+  --ax-shadow-md: 0 2px 6px rgba(17,17,20,.06), 0 14px 34px rgba(17,17,20,.07);
+  --ax-shadow-lg: 0 4px 12px rgba(17,17,20,.08), 0 30px 70px rgba(17,17,20,.12);
 
   --ax-header-h: 64px;
 
@@ -853,6 +869,43 @@ html.lenis, html.lenis body { height: auto; }
   --academy-text-subtle:var(--ax-text-tertiary);
   --academy-border:     var(--ax-border-subtle);
   --academy-border-strong: var(--ax-border);
+
+  background: var(--ax-canvas);
+  color: var(--ax-text);
+}
+
+/* ---------- Tema escuro: recurso, não default ---------- */
+.dark .academy,
+.academy[data-surface="dark"],
+.ax-dark-band {
+  --ax-canvas:           color-mix(in oklab, var(--tenant-accent) 3%,  #0B0B0E);
+  --ax-surface:          color-mix(in oklab, var(--tenant-accent) 4%,  #131317);
+  --ax-surface-raised:   color-mix(in oklab, var(--tenant-accent) 5%,  #1A1A1F);
+  --ax-surface-hover:    color-mix(in oklab, var(--tenant-accent) 8%,  #232329);
+  --ax-surface-selected: color-mix(in oklab, var(--tenant-accent) 20%, #232329);
+  --ax-surface-inverse:  #F5F5F7;
+  --ax-surface-brand:    color-mix(in oklab, var(--tenant-accent) 16%, #131317);
+
+  --ax-veil:        rgba(255,255,255,.06);
+  --ax-veil-strong: rgba(255,255,255,.12);
+
+  --ax-border-subtle:  rgba(255,255,255,.07);
+  --ax-border:         rgba(255,255,255,.12);
+  --ax-border-strong:  rgba(255,255,255,.2);
+
+  --ax-text:           #F3F3F5;
+  --ax-text-secondary: #B6B6BF;
+  --ax-text-tertiary:  #8C8C97;
+  --ax-text-disabled:  #5B5B64;
+
+  --ax-success: #4ADE80;
+  --ax-warning: #FBBF24;
+  --ax-error:   #F87171;
+  --ax-info:    #7DD3FC;
+
+  --ax-shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+  --ax-shadow-md: 0 8px 24px rgba(0,0,0,.42);
+  --ax-shadow-lg: 0 24px 64px rgba(0,0,0,.5);
 
   background: var(--ax-canvas);
   color: var(--ax-text);
@@ -877,22 +930,22 @@ html.lenis, html.lenis body { height: auto; }
 .ax-stack > * + * { margin-top: 12px; }
 
 /* --- escala tipográfica --- */
-.ax-display { font-size: clamp(34px, 4.6vw, 58px); line-height: 1.02; letter-spacing: -.035em; font-weight: 600; text-wrap: balance; }
-.ax-h1      { font-size: clamp(28px, 3.4vw, 42px);  line-height: 1.08; letter-spacing: -.032em; font-weight: 600; text-wrap: balance; }
-.ax-h2      { font-size: clamp(21px, 2.1vw, 30px);  line-height: 1.15; letter-spacing: -.028em; font-weight: 600; }
-.ax-h3      { font-size: clamp(17px, 1.4vw, 22px);  line-height: 1.25; letter-spacing: -.022em; font-weight: 600; }
-.ax-card-title { font-size: 15px; line-height: 1.3; letter-spacing: -.015em; font-weight: 600; }
+.ax-display { font-size: clamp(34px, 4.4vw, 56px); line-height: 1.06; letter-spacing: -.03em; font-weight: 450; text-wrap: balance; max-width: 18ch; }
+.ax-h1      { font-size: clamp(27px, 3.2vw, 40px);  line-height: 1.12; letter-spacing: -.028em; font-weight: 450; text-wrap: balance; max-width: 22ch; }
+.ax-h2      { font-size: clamp(20px, 2vw, 28px);    line-height: 1.2;  letter-spacing: -.024em; font-weight: 480; }
+.ax-h3      { font-size: clamp(17px, 1.4vw, 21px);  line-height: 1.3;  letter-spacing: -.02em;  font-weight: 500; }
+.ax-card-title { font-size: 15px; line-height: 1.35; letter-spacing: -.012em; font-weight: 520; }
 @media (min-width: 1280px) { .ax-card-title { font-size: 16px; } }
 .ax-body    { font-size: 15px; line-height: 1.6; color: var(--ax-text-secondary); max-width: 68ch; }
 .ax-meta    { font-size: 12.5px; line-height: 1.4; color: var(--ax-text-tertiary); }
-.ax-eyebrow { font-size: 11px; line-height: 1; letter-spacing: .16em; text-transform: uppercase; color: var(--ax-text-tertiary); font-weight: 600; }
+.ax-eyebrow { font-size: 11px; line-height: 1; letter-spacing: .16em; text-transform: uppercase; color: var(--ax-text-tertiary); font-weight: 520; }
 
 /* --- button system --- */
 .ax-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
   height: 40px; padding-inline: 16px;
   border-radius: 999px;
-  font-size: 14px; font-weight: 600; line-height: 1;
+  font-size: 14px; font-weight: 520; line-height: 1;
   border: 1px solid transparent;
   white-space: nowrap;
   transition: background .16s ease, color .16s ease, border-color .16s ease, filter .16s ease;
@@ -903,9 +956,11 @@ html.lenis, html.lenis body { height: auto; }
 .ax-btn[data-variant="primary"]   { background: var(--tenant-accent); color: var(--tenant-accent-contrast); }
 .ax-btn[data-variant="primary"]:hover { filter: brightness(1.08); }
 .ax-btn[data-variant="secondary"] { background: var(--ax-surface-hover); color: var(--ax-text); }
-.ax-btn[data-variant="secondary"]:hover { background: color-mix(in oklab, var(--ax-surface-hover) 70%, #FFF 8%); }
+.ax-btn[data-variant="secondary"]:hover { background: var(--ax-surface-selected); }
 .ax-btn[data-variant="ghost"]     { background: transparent; color: var(--ax-text-secondary); }
-.ax-btn[data-variant="ghost"]:hover { background: rgba(255,255,255,.07); color: var(--ax-text); }
+.ax-btn[data-variant="ghost"]:hover { background: var(--ax-veil); color: var(--ax-text); }
+.ax-btn[data-variant="outline"]   { background: transparent; color: var(--ax-text); border-color: var(--ax-border); }
+.ax-btn[data-variant="outline"]:hover { background: var(--ax-veil); }
 .ax-btn[data-variant="destructive"] { background: color-mix(in oklab, var(--ax-error) 20%, transparent); color: var(--ax-error); }
 .ax-btn[data-variant="link"] { height: auto; padding: 0; background: none; color: var(--tenant-accent); border-radius: 4px; }
 .ax-btn[data-variant="link"]:hover { text-decoration: underline; }
@@ -916,16 +971,16 @@ html.lenis, html.lenis body { height: auto; }
   display: inline-flex; align-items: center; justify-content: center;
   height: 40px; width: 40px; min-height: 40px; min-width: 40px;
   border-radius: 999px;
-  background: rgba(255,255,255,.07);
+  background: var(--ax-veil);
   color: var(--ax-text);
   border: 1px solid var(--ax-border-subtle);
   transition: background .16s ease, border-color .16s ease;
 }
-.ax-iconbtn:hover { background: rgba(255,255,255,.13); }
+.ax-iconbtn:hover { background: var(--ax-veil-strong); }
 .ax-iconbtn[data-active="true"] {
-  background: color-mix(in oklab, var(--tenant-accent) 22%, transparent);
-  border-color: color-mix(in oklab, var(--tenant-accent) 50%, transparent);
-  color: #fff;
+  background: var(--tenant-accent);
+  border-color: transparent;
+  color: var(--ax-on-accent);
 }
 .ax-iconbtn[data-size="sm"] { height: 32px; width: 32px; min-height: 32px; min-width: 32px; }
 
@@ -934,7 +989,7 @@ html.lenis, html.lenis body { height: auto; }
   display: inline-flex; align-items: center; gap: .4rem;
   height: 34px; padding-inline: 14px;
   border-radius: 999px;
-  font-size: 13px; font-weight: 500; line-height: 1;
+  font-size: 13px; font-weight: 450; line-height: 1;
   background: var(--ax-surface-raised);
   color: var(--ax-text-secondary);
   border: 1px solid transparent;
@@ -943,16 +998,16 @@ html.lenis, html.lenis body { height: auto; }
 }
 .ax-chip:hover { background: var(--ax-surface-hover); color: var(--ax-text); }
 .ax-chip[data-selected="true"] {
-  background: var(--ax-surface-selected);
-  color: #fff;
-  border-color: color-mix(in oklab, var(--tenant-accent) 45%, transparent);
+  background: var(--tenant-accent);
+  color: var(--ax-on-accent);
+  border-color: transparent;
 }
 .ax-badge {
   display: inline-flex; align-items: center; gap: .32rem;
   height: 22px; padding-inline: 8px;
   border-radius: 6px;
-  font-size: 11px; font-weight: 600; letter-spacing: .01em;
-  background: rgba(255,255,255,.10);
+  font-size: 11px; font-weight: 520; letter-spacing: .01em;
+  background: var(--ax-veil-strong);
   color: var(--ax-text);
   backdrop-filter: blur(6px);
 }
@@ -961,7 +1016,7 @@ html.lenis, html.lenis body { height: auto; }
 .ax-badge[data-tone="done"]     { background: color-mix(in oklab, var(--ax-success) 20%, transparent); color: var(--ax-success); }
 
 /* --- progress --- */
-.ax-progress { height: 4px; border-radius: 999px; background: rgba(255,255,255,.14); overflow: hidden; }
+.ax-progress { height: 4px; border-radius: 999px; background: var(--ax-veil-strong); overflow: hidden; }
 .ax-progress > i { display: block; height: 100%; background: var(--tenant-accent); border-radius: inherit; }
 
 /* --- CourseCard 2.0 --- */
@@ -970,6 +1025,7 @@ html.lenis, html.lenis body { height: auto; }
   display: flex; flex-direction: column;
   border-radius: var(--ax-r-md);
   background: var(--ax-surface);
+  border: 1px solid var(--ax-border-subtle);
   overflow: hidden;
   transition: background .16s ease, transform .16s ease, box-shadow .16s ease;
 }
@@ -1019,7 +1075,7 @@ html.lenis, html.lenis body { height: auto; }
   color: var(--ax-text-secondary);
   transition: color .16s ease, background .16s ease;
 }
-.ax-navlink:hover { color: var(--ax-text); background: rgba(255,255,255,.06); }
+.ax-navlink:hover { color: var(--ax-text); background: var(--ax-veil); }
 .ax-navlink[data-active="true"] { color: var(--ax-text); background: var(--ax-surface-raised); }
 
 .ax-search {
@@ -1039,7 +1095,8 @@ html.lenis, html.lenis body { height: auto; }
 
 /* --- painéis / empty / skeleton --- */
 .ax-panel { background: var(--ax-surface); border-radius: var(--ax-r-lg); }
-.ax-panel-raised { background: var(--ax-surface-raised); border-radius: var(--ax-r-lg); }
+.academy .ax-panel { border: 1px solid var(--ax-border-subtle); }
+.ax-panel-raised { background: var(--ax-surface-raised); border-radius: var(--ax-r-lg); border: 1px solid var(--ax-border-subtle); }
 .ax-divider { height: 1px; background: var(--ax-border-subtle); }
 .ax-skeleton {
   background: linear-gradient(90deg, var(--ax-surface) 25%, var(--ax-surface-hover) 50%, var(--ax-surface) 75%);
@@ -1050,6 +1107,7 @@ html.lenis, html.lenis body { height: auto; }
 .ax-empty {
   display: flex; flex-direction: column; align-items: center; gap: 10px;
   background: var(--ax-surface);
+  border: 1px solid var(--ax-border-subtle);
   border-radius: var(--ax-r-lg);
   padding: 44px 24px;
   text-align: center;
@@ -1106,3 +1164,57 @@ html.lenis, html.lenis body { height: auto; }
   transition: background .16s ease, transform .16s ease;
 }
 .ax-tile:hover { background: var(--ax-surface-hover); }
+
+/* ============================================================
+   EXPRESSÃO DA MARCA (Camada 2) — intensidade por superfície.
+   A estrutura nunca muda; o que muda é quanto da marca aparece.
+   ============================================================ */
+.ax-dark-band { background: var(--ax-canvas); color: var(--ax-text); }
+
+/* hero: variações de tratamento, mesma estrutura */
+.ax-hero[data-tone="brand"] {
+  background:
+    radial-gradient(120% 140% at 88% 0%, color-mix(in oklab, var(--tenant-accent) 26%, transparent) 0%, transparent 62%),
+    linear-gradient(180deg, color-mix(in oklab, var(--tenant-accent) 8%, var(--ax-canvas)) 0%, var(--ax-canvas) 100%);
+}
+.ax-hero[data-tone="editorial"] {
+  background: linear-gradient(180deg, var(--ax-surface) 0%, var(--ax-canvas) 100%);
+}
+
+/* grafismo institucional discreto (não é imagem, não é hardcode de marca) */
+.ax-motif {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  opacity: .5;
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--tenant-accent) 16%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--tenant-accent) 16%, transparent) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(90% 80% at 78% 12%, #000 0%, transparent 72%);
+}
+.ax-accent-bar {
+  display: inline-block; height: 3px; width: 44px; border-radius: 999px;
+  background: var(--tenant-accent);
+}
+.ax-accent-strip { height: 4px; background: var(--tenant-accent); }
+
+/* bloco institucional em cor de marca (uso controlado) */
+.ax-brand-block {
+  background: var(--tenant-accent);
+  color: var(--ax-on-accent);
+  border-radius: var(--ax-r-lg);
+}
+.ax-brand-soft {
+  background: var(--ax-surface-brand);
+  border: 1px solid color-mix(in oklab, var(--tenant-accent) 26%, transparent);
+  border-radius: var(--ax-r-lg);
+}
+
+/* passo numerado (como acessar) */
+.ax-step { display: flex; gap: 14px; }
+.ax-step-num {
+  flex: 0 0 auto; height: 30px; width: 30px; border-radius: 999px;
+  display: grid; place-items: center; font-size: 13px; font-weight: 520;
+  background: var(--tenant-accent); color: var(--ax-on-accent);
+}
+
+.ax-menuitem:hover { background: var(--ax-veil); }
