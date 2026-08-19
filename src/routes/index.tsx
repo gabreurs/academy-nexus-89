@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
-import { ArrowRight, PlayCircle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useAcademyExperience, useTenant } from "@/lib/tenant/TenantProvider";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useTenantIdentity } from "@/lib/tenant/useTenantIdentity";
@@ -9,7 +9,6 @@ import { AcademyLanding } from "@/components/academy/AcademyLanding";
 import { ContinueHero } from "@/components/academy/ContinueHero";
 import { CourseRail } from "@/components/academy/CourseRail";
 import { CourseCard } from "@/components/academy/CourseCard";
-import { CourseCoverPlaceholder } from "@/components/academy/CourseCoverPlaceholder";
 import { CardSkeletonGrid, Eyebrow, SectionHeader, Skeleton } from "@/components/academy/ui";
 import { useAcademyCatalog } from "@/lib/academy/useCatalog";
 import { useMyList } from "@/lib/list/useMyList";
@@ -218,65 +217,47 @@ function Storefront() {
       {isCorporate ? (
         <AcademyLanding courseCount={courses.length} courses={courses} />
       ) : (
-      <section className="ax-hero" data-tone="editorial">
-        <div className="ax-container grid w-full items-center gap-10 lg:grid-cols-[minmax(0,1fr)_460px]">
-          <div className="ax-hero-copy">
-            <Eyebrow>{exp.copy.eyebrow}</Eyebrow>
-            <h1 className="ax-display mt-3">{exp.copy.title}</h1>
-            <p className="ax-body mt-4 text-[16px]">{exp.copy.lead}</p>
-            <div className="mt-7 flex flex-wrap items-center gap-2.5">
-              <Link
-                to={session ? "/inicio" : "/login"}
-                search={session ? undefined : ({ next: "/inicio" } as any)}
-                className="ax-btn"
-                data-variant="primary"
-                data-size="lg"
-              >
-                {session ? "Continuar estudando" : "Acessar a plataforma"}
-                <ArrowRight size={16} />
-              </Link>
-              <Link to="/catalogo" className="ax-btn" data-variant="outline" data-size="lg">
-                Ver catálogo
-              </Link>
-            </div>
-            {!tenantLoading && (
-              <p className="ax-meta mt-5">
-                Acervo de {orgName}
-                {courses.length ? ` · ${courses.length} títulos publicados` : ""}
-              </p>
-            )}
+      <>
+        {/* Marketplace deslogado: apresentação curta + o MESMO hero editorial
+            de conteúdo usado na área autenticada, promovendo um destaque. */}
+        <section className="ax-container pt-10">
+          <Eyebrow>{exp.copy.eyebrow}</Eyebrow>
+          <h1 className="ax-h1 mt-2 max-w-[20ch]">{exp.copy.title}</h1>
+          <p className="ax-body mt-3 max-w-[62ch] text-[15.5px]">{exp.copy.lead}</p>
+          <div className="mt-5 flex flex-wrap items-center gap-2.5">
+            <Link
+              to={session ? "/inicio" : "/login"}
+              search={session ? undefined : ({ next: "/inicio" } as any)}
+              className="ax-btn"
+              data-variant="primary"
+              data-size="md"
+            >
+              {session ? "Continuar estudando" : "Acessar a plataforma"}
+              <ArrowRight size={16} />
+            </Link>
+            <Link to="/catalogo" className="ax-btn" data-variant="outline" data-size="md">
+              Ver catálogo
+            </Link>
           </div>
+          {!tenantLoading && (
+            <p className="ax-meta mt-4">
+              Acervo de {orgName}
+              {courses.length ? ` · ${courses.length} títulos publicados` : ""}
+            </p>
+          )}
+        </section>
 
-          <div className="hidden lg:block">
-            {spotlight ? (
-              <Link
-                to="/curso/$courseSlug"
-                params={{ courseSlug: spotlight.slug }}
-                className="ax-hero-art ax-dark-band block"
-                aria-label={spotlight.title}
-              >
-                {spotlight.cover_url ? (
-                  <img src={spotlight.cover_url} alt="" aria-hidden fetchPriority="high" />
-                ) : (
-                  <CourseCoverPlaceholder title={spotlight.title} showTitle={false} className="h-full w-full" />
-                )}
-                <div
-                  className="absolute inset-x-0 bottom-0 p-4"
-                  style={{ background: "linear-gradient(0deg, rgba(0,0,0,.85), transparent)" }}
-                >
-                  <p className="ax-eyebrow">Em destaque</p>
-                  <p className="ax-h3 mt-1 line-clamp-2">{spotlight.title}</p>
-                  <span className="ax-meta mt-1 inline-flex items-center gap-1.5">
-                    <PlayCircle size={13} /> Ver detalhes do curso
-                  </span>
-                </div>
-              </Link>
-            ) : (
-              <div className="ax-hero-art" />
-            )}
-          </div>
-        </div>
-      </section>
+        {spotlight && (
+          <ContinueHero
+            course={spotlight}
+            resuming={false}
+            eyebrow="Em destaque"
+            primaryLabel="Ver curso"
+            primaryTo="details"
+            categoryName={spotlight.category_id ? categoryNameById[spotlight.category_id] : undefined}
+          />
+        )}
+      </>
       )}
 
       {/* DESTAQUES DO ACERVO */}
