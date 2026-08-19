@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/lib/tenant/TenantProvider";
-import { TenantLogo } from "@/components/site/TenantLogo";
+import { TenantLogo } from "@/components/academy/TenantLogo";
 
 export const Route = createFileRoute("/solicitar-acesso")({
   ssr: false,
