@@ -1242,73 +1242,86 @@ html.dark, html.dark body {
    Bloco editorial imersivo derivado da ARTE DO CURSO — não do
    accent do tenant. Vive dentro de uma interface light-first.
    ============================================================ */
-.ax-cinehero {
+/* ============================================================
+   HERO EDITORIAL DE CONTEÚDO (.ax-hero-panel)
+   Painel dentro do container: margem lateral, radius, altura
+   controlada. Não é background de página, não usa 100vh.
+   ============================================================ */
+.ax-hero-panel {
   position: relative;
   isolation: isolate;
   overflow: hidden;
   display: flex;
   align-items: flex-end;
-  min-height: 460px;
-  color: #F4F4F6;
+  border-radius: 24px;
+  height: clamp(420px, 38vw, 620px);
+  color: #F7F7F8;
   background: #0B0B0E;
+  box-shadow: var(--ax-shadow-md);
 }
-@media (min-width: 1024px) { .ax-cinehero { min-height: 540px; } }
-@media (min-width: 1536px) { .ax-cinehero { min-height: 600px; } }
+@media (max-width: 767px) {
+  .ax-hero-panel { border-radius: 20px; height: auto; min-height: 470px; }
+}
 
-/* plano de fundo desfocado: salva capas de baixa resolução */
-.ax-cinehero-bg {
-  position: absolute; inset: -6%; z-index: -3;
-  background-size: cover; background-position: center;
-  filter: blur(38px) saturate(115%) brightness(.62);
-  transform: scale(1.06);
-}
-/* arte nítida, crop controlado, sem esticar */
-.ax-cinehero-art {
+/* a arte preenche o retângulo, sem deformar */
+.ax-hero-panel-art {
   position: absolute; inset: 0; z-index: -2;
-  background-size: cover; background-position: center 32%;
-  mask-image:
-    linear-gradient(90deg, transparent 2%, rgba(0,0,0,.3) 22%, #000 55%),
-    linear-gradient(0deg, transparent 0%, #000 26%);
-  mask-composite: intersect;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center 38%;
 }
-.ax-cinehero-scrim {
+
+/* escurecimento UNIFORME leve + reforço discreto sob o texto */
+.ax-hero-panel-veil {
   position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(8,8,11,.95) 0%, rgba(8,8,11,.8) 36%, rgba(8,8,11,.3) 66%, rgba(8,8,11,.08) 100%),
-    linear-gradient(0deg, var(--ax-canvas) 0%, color-mix(in oklab, var(--ax-canvas) 55%, transparent) 12%, rgba(8,8,11,.35) 30%, transparent 66%),
-    radial-gradient(125% 95% at 50% 42%, transparent 48%, rgba(0,0,0,.4) 100%);
+    linear-gradient(0deg, rgba(6,6,9,.72) 0%, rgba(6,6,9,.34) 34%, rgba(6,6,9,0) 62%),
+    rgba(0,0,0,.22);
 }
-.ax-cinehero-copy { max-width: 620px; padding-block: 44px; }
-@media (min-width: 1024px) { .ax-cinehero-copy { padding-block: 64px; } }
-.ax-cinehero-title {
-  font-size: clamp(30px, 4.2vw, 54px);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  font-weight: 450;
+
+.ax-hero-panel-copy {
+  position: relative;
+  max-width: min(560px, 82%);
+  padding: 28px 24px;
 }
-.ax-cinehero-lead {
-  color: rgba(244,244,246,.82);
-  font-size: 15px; line-height: 1.55;
+@media (min-width: 768px) { .ax-hero-panel-copy { padding: 40px 44px; max-width: 600px; } }
+@media (min-width: 1280px) { .ax-hero-panel-copy { padding: 48px 56px; } }
+
+.ax-hero-panel-eyebrow {
+  font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase;
+  color: rgba(247,247,248,.78);
+}
+.ax-hero-panel-title {
+  margin-top: 10px;
+  font-size: clamp(27px, 3.1vw, 44px);
+  line-height: 1.08; letter-spacing: -0.02em; font-weight: 450;
+  text-shadow: 0 1px 24px rgba(0,0,0,.35);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ax-hero-panel-meta {
+  margin-top: 12px; font-size: 13px; color: rgba(247,247,248,.8);
+}
+.ax-hero-panel-lead {
+  margin-top: 12px;
+  font-size: 14.5px; line-height: 1.55; color: rgba(247,247,248,.84);
+  max-width: 52ch;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
-/* glass pontual: metadata e painel de progresso apenas */
-.ax-cinehero-glass {
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.16);
-  backdrop-filter: blur(14px) saturate(140%);
-  border-radius: 999px;
-  padding: 6px 12px;
-  font-size: 12.5px;
-  color: rgba(244,244,246,.9);
+@media (max-width: 767px) { .ax-hero-panel-lead { -webkit-line-clamp: 2; font-size: 14px; } }
+
+.ax-hero-panel-progress {
+  margin-top: 18px; max-width: 300px;
+  display: flex; flex-direction: column; gap: 7px;
+  font-size: 12.5px; color: rgba(247,247,248,.82);
 }
-.ax-cinehero-progress {
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.16);
-  backdrop-filter: blur(14px) saturate(140%);
-  border-radius: var(--ax-r-md);
-  padding: 12px 14px;
-  max-width: 340px;
+.ax-hero-panel-bar { height: 4px; border-radius: 999px; background: rgba(255,255,255,.28); overflow: hidden; }
+.ax-hero-panel-bar > i { display: block; height: 100%; background: var(--tenant-accent); }
+
+.ax-hero-panel-actions { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; }
+/* vidro pontual apenas no CTA secundário */
+.ax-hero-panel-ghost {
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.2);
+  backdrop-filter: blur(10px);
+  color: #F7F7F8;
 }
-.ax-cinehero-bar { height: 4px; border-radius: 999px; background: rgba(255,255,255,.22); overflow: hidden; }
-.ax-cinehero-bar > i { display: block; height: 100%; background: var(--tenant-accent); }
-@media (prefers-reduced-motion: reduce) { .ax-cinehero-bg { transform: none; } }
+.ax-hero-panel-ghost:hover { background: rgba(255,255,255,.22); }
