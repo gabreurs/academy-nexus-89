@@ -34,6 +34,12 @@ type Invite = {
   status: "pending" | "accepted" | "revoked" | "expired";
   created_at: string; expires_at: string | null;
 };
+type AccessRequest = {
+  id: string; full_name: string; email: string; phone: string | null;
+  affiliation: string | null; message: string | null;
+  status: "pending" | "approved" | "rejected";
+  review_note: string | null; reviewed_at: string | null; created_at: string;
+};
 type CatalogRow = {
   course_id: string; is_required: boolean; auto_enroll: boolean;
   courses?: { title: string; slug: string; status: string } | null;
@@ -47,6 +53,7 @@ const NAV: ConsoleNavGroup[] = [
   { label: "Pessoas", items: [
     { id: "membros", label: "Membros" },
     { id: "convites", label: "Convites" },
+    { id: "solicitacoes", label: "Solicitações de acesso" },
     { id: "importar", label: "Importar CSV" },
   ] },
   { label: "Configuração", items: [
@@ -74,6 +81,10 @@ function EmpresaPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [catalog, setCatalog] = useState<CatalogRow[]>([]);
+  const [requests, setRequests] = useState<AccessRequest[]>([]);
+  const [reqFilter, setReqFilter] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+  const [reqBusyId, setReqBusyId] = useState<string | null>(null);
+  const [reqMessage, setReqMessage] = useState<null | { kind: "ok" | "err" | "busy"; text: string }>(null);
   const [loading, setLoading] = useState(true);
 
   const [email, setEmail] = useState("");
@@ -96,7 +107,7 @@ function EmpresaPage() {
   const refresh = useCallback(async () => {
     if (!orgId) return;
     setLoading(true);
-    const [{ data: o }, { data: b }, { data: doms }, { data: mems }, { data: invs }, { data: cat }] = await Promise.all([
+    const [{ data: o }, { data: b }, { data: doms }, { data: mems }, { data: invs }, { data: cat }, { data: reqs }] = await Promise.all([
       supabase.from("organizations").select("*").eq("id", orgId).maybeSingle(),
       supabase.from("organization_branding").select("*").eq("organization_id", orgId).maybeSingle(),
       supabase.from("organization_domains").select("id, hostname, is_primary").eq("organization_id", orgId),
@@ -109,6 +120,9 @@ function EmpresaPage() {
       supabase.from("organization_course_catalog")
         .select("course_id, is_required, auto_enroll, courses(title, slug, status)")
         .eq("organization_id", orgId).eq("is_visible", true),
+      supabase.from("access_requests")
+        .select("id, full_name, email, phone, affiliation, message, status, review_note, reviewed_at, created_at")
+        .eq("organization_id", orgId).order("created_at", { ascending: false }),
     ]);
     setOrg(o); setBranding(b); setDomains(doms ?? []);
     const rows = (mems ?? []) as Omit<Member, "profiles">[];
@@ -121,6 +135,7 @@ function EmpresaPage() {
     setMembers(rows.map((r) => ({ ...r, profiles: profileMap[r.user_id] ?? null })));
     setInvites((invs as Invite[]) ?? []);
     setCatalog((cat as any as CatalogRow[]) ?? []);
+    setRequests((reqs as any as AccessRequest[]) ?? []);
     setLoading(false);
   }, [orgId]);
 
