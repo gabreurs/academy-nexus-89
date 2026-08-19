@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { SindicoLabMark } from "@/components/brand/SindicoLabMark";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useTheme } from "@/lib/theme/ThemeProvider";
@@ -80,13 +81,7 @@ export function ConsoleShell({
                 <path d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <span
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-[11px] font-semibold"
-              style={{ background: "var(--c-text)", color: "var(--c-surface)" }}
-              aria-hidden
-            >
-              SL
-            </span>
+            <SindicoLabMark className="h-7 w-auto shrink-0" />
             <div className="min-w-0 leading-tight">
               <p className="truncate text-sm font-medium">{title}</p>
               <p className="truncate text-[11px] uppercase tracking-[0.1em] c-muted">{kicker}</p>
@@ -114,7 +109,16 @@ export function ConsoleShell({
               data-variant="ghost"
               onClick={() => setChoice(resolved === "dark" ? "light" : "dark")}
             >
-              {resolved === "dark" ? "☀" : "☾"}
+              {resolved === "dark" ? (
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2z" />
+                </svg>
+              )}
             </button>
             {user?.email && <span className="hidden max-w-[200px] truncate px-2 text-xs c-muted lg:inline">{user.email}</span>}
             <Link to="/inicio" className="c-btn" data-variant="ghost" data-size="sm">Ir para a Academy</Link>
