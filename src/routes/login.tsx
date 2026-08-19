@@ -66,6 +66,11 @@ function LoginPage() {
         >
           {mode === "login" ? "Não tem conta? Criar conta" : "Já tenho conta"}
         </button>
+        <div>
+          <Link to="/solicitar-acesso" className="ax-btn" data-variant="link">
+            Não tem acesso? Solicitar acesso
+          </Link>
+        </div>
       </div>
     </div>
   );
