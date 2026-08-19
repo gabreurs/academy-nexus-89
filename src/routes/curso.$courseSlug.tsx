@@ -247,31 +247,18 @@ function CoursePage() {
           <CourseReviews courseId={course.id} canReview={hasAccess} />
         </div>
 
-        <aside className="academy-surface academy-border sticky top-24 h-fit rounded-2xl border p-6">
-          <p className="academy-subtle text-[11px] uppercase tracking-[0.18em]">{levelLabel(course.level) ?? "Curso"}</p>
+        <aside className="ax-panel sticky top-[calc(var(--ax-header-h)+16px)] h-fit p-6">
+          <p className="ax-eyebrow">{levelLabel(course.level) ?? "Curso"}</p>
           {course.instructor_name && <p className="mt-2 font-medium">{course.instructor_name}</p>}
           {course.duration_minutes ? (
-            <p className="academy-muted text-sm">{durationLabel(course.duration_minutes)} de conteúdo</p>
+            <p className="ax-meta mt-1">{durationLabel(course.duration_minutes)} de conteúdo</p>
           ) : null}
-          <div className="mt-6 space-y-2">
-            {!session ? (
-              <Link to="/login" search={{ next: `/curso/${courseSlug}` }} className="academy-cta w-full">Entrar para começar</Link>
-            ) : hasAccess ? (
-              <Link to="/curso/$courseSlug/aprender" params={{ courseSlug }} className="academy-cta w-full">Continuar curso</Link>
-            ) : course.external_checkout_url ? (
-              <a href={course.external_checkout_url} target="_blank" rel="noopener" className="academy-cta w-full">Comprar acesso</a>
-            ) : !inCatalog && !isPlatformAdmin ? (
-              <div className="academy-border academy-muted rounded-xl border py-3 text-center text-sm">
-                Curso indisponível no catálogo da sua organização.
-              </div>
-            ) : (
-              <button onClick={enroll} className="academy-cta w-full">Iniciar curso</button>
-            )}
-            {enrollError && <p className="mt-2 text-xs" style={{ color: "#FCA5A5" }}>{enrollError}</p>}
-          </div>
+          <div className="mt-6">{primaryCta}</div>
+          {!hasAccess && session && !inCatalog && !isPlatformAdmin && !course.external_checkout_url && (
+            <p className="ax-meta mt-3">Curso indisponível no catálogo da sua organização.</p>
+          )}
         </aside>
-      </main>
-      <TenantDemoSwitcher />
-    </div>
+      </div>
+    </AcademyShell>
   );
 }
