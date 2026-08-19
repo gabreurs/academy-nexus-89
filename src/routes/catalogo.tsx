@@ -3,10 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useTenant } from "@/lib/tenant/TenantProvider";
-import { AcademyHeader } from "@/components/academy/AcademyHeader";
+import { AcademyShell } from "@/components/academy/AcademyShell";
 import { CourseCard } from "@/components/academy/CourseCard";
 import { CardSkeletonGrid, Chip, EmptyState, Eyebrow } from "@/components/academy/ui";
-import { TenantDemoSwitcher } from "@/components/site/TenantDemoSwitcher";
 import { useAcademyCatalog } from "@/lib/academy/useCatalog";
 import { useMyList } from "@/lib/list/useMyList";
 import { levelLabel } from "@/components/academy/types";
@@ -89,10 +88,8 @@ function Catalog() {
   if (tenantLoading) return <div className="academy min-h-screen" />;
 
   return (
-    <div className="academy min-h-screen">
-      <AcademyHeader />
-
-      <main className="ax-container pb-24 pt-8 md:pt-12">
+    <AcademyShell>
+      <div className="ax-container pb-20 pt-8 md:pt-10">
         <Eyebrow>Catálogo</Eyebrow>
         <h1 className="ax-h1 mt-2.5">Explore todo o acervo</h1>
         <p className="ax-body mt-2 text-[15px]">
