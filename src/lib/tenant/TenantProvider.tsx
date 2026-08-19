@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import type { ResolvedTenant } from "./types";
-import { accentContrastInk, accentLuminance } from "./accent";
+import { accentContrastInk } from "./accent";
 import { resolveAcademyExperience, type AcademyExperience } from "./experience";
 
 type Ctx = {
@@ -36,44 +36,53 @@ function detectSlugFromEnvironment(): string | null {
   return null;
 }
 
-function applyBrandingVars(t: ResolvedTenant | null) {
-  if (typeof document === "undefined") return;
+/**
+ * FONTE ÚNICA DE VERDADE VISUAL.
+ *
+ * O que está no painel de marca é escrito literalmente nos tokens do tema.
+ * Nenhuma superfície principal é inventada a partir do accent: canvas,
+ * surface e tinta vêm da configuração (claro e escuro têm paletas próprias).
+ * O accent só decide ação, seleção, foco e progresso.
+ */
+export function applyBrandingVars(b: Partial<Branding> | null | undefined) {
+  if (typeof document === "undefined" || !b) return;
   const root = document.documentElement;
+  const set = (k: string, v?: string | null) => v && root.style.setProperty(k, v);
+
+  // marca
+  set("--brand-primary", b.primary_color);
+  set("--brand-secondary", b.secondary_color);
+  set("--brand-accent", b.accent_color);
+  set("--tenant-accent", b.accent_color);
+  if (b.accent_color) root.style.setProperty("--tenant-accent-contrast", accentContrastInk(b.accent_color));
+
+  // tema claro (configurado)
+  set("--brand-bg", b.background_color);
+  set("--brand-surface", b.surface_color);
+  set("--brand-text", b.text_color);
+  set("--tenant-canvas-light", b.background_color);
+  set("--tenant-surface-light", b.surface_color);
+  set("--tenant-ink-light", b.text_color);
+
+  // tema escuro (paleta própria, não é inversão do claro)
+  set("--tenant-canvas-dark", b.dark_background_color);
+  set("--tenant-surface-dark", b.dark_surface_color);
+  set("--tenant-ink-dark", b.dark_text_color);
+}
+
+function applyTenant(t: ResolvedTenant | null) {
+  if (typeof document === "undefined") return;
   const b = t?.branding;
   if (!b) return;
-  root.style.setProperty("--brand-primary", b.primary_color);
-  root.style.setProperty("--brand-secondary", b.secondary_color);
-  root.style.setProperty("--brand-accent", b.accent_color);
-  root.style.setProperty("--brand-bg", b.background_color);
-  root.style.setProperty("--brand-surface", b.surface_color);
-  root.style.setProperty("--brand-text", b.text_color);
-  // Ponte semântica: --tenant-accent é a única cor de marca que sobrevive
-  // dentro do palco escuro do player. Sempre acompanha o acento do tenant.
-  root.style.setProperty("--tenant-accent", b.accent_color);
-  // CAMADA 2 → só accent. A tinta legível sobre ele é CALCULADA: um tenant
-  // não pode configurar um CTA invisível (amarelo + branco, p. ex.).
-  root.style.setProperty("--tenant-accent-contrast", accentContrastInk(b.accent_color));
-
-  // CAMADA 2 (profunda): a marca também define a ESTRATÉGIA NEUTRA do tema
-  // claro — canvas, superfície e tinta. Só aceitamos valores que preservem o
-  // light-first: um background escuro configurado pelo tenant não sequestra o
-  // tema claro, vira apenas intensidade de tinta.
-  const bgLum = accentLuminance(b.background_color);
-  const surfLum = accentLuminance(b.surface_color);
-  const textLum = accentLuminance(b.text_color);
-  root.style.setProperty("--tenant-canvas-base", bgLum > 0.6 ? b.background_color : "#F6F6F4");
-  root.style.setProperty("--tenant-surface-base", surfLum > 0.7 ? b.surface_color : "#FFFFFF");
-  root.style.setProperty("--tenant-ink-base", textLum < 0.18 ? b.text_color : "#17171B");
-  // Marcas de acento muito saturado/claro precisam de tinta menor para não
-  // "lavar" o canvas; marcas discretas podem tingir um pouco mais.
-  const accLum = accentLuminance(b.accent_color);
-  root.style.setProperty("--tenant-tint-strength", accLum > 0.55 ? "3%" : "5%");
+  applyBrandingVars(b);
   if (b.environment_name) document.title = b.environment_name;
+  const root = document.documentElement;
   if (b.favicon_url) {
     let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");
     if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
     link.href = b.favicon_url;
   }
+  void root;
 }
 
 async function loadTenant(slugOrHost: { slug?: string | null; hostname?: string | null }): Promise<ResolvedTenant | null> {
