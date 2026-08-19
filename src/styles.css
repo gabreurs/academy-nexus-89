@@ -903,10 +903,12 @@ html.lenis, html.lenis body { height: auto; }
   --ax-border:         rgba(255,255,255,.12);
   --ax-border-strong:  rgba(255,255,255,.2);
 
-  --ax-text:           #F3F3F5;
-  --ax-text-secondary: #B6B6BF;
-  --ax-text-tertiary:  #8C8C97;
-  --ax-text-disabled:  #5B5B64;
+  --ax-text:           var(--tenant-ink-base);
+  --ax-text-secondary: color-mix(in oklab, var(--tenant-ink-base) 72%, var(--tenant-canvas-base));
+  --ax-text-tertiary:  color-mix(in oklab, var(--tenant-ink-base) 55%, var(--tenant-canvas-base));
+  --ax-text-disabled:  color-mix(in oklab, var(--tenant-ink-base) 38%, var(--tenant-canvas-base));
+  --ax-focus-ring:     var(--tenant-accent);
+  --ax-progress:       var(--tenant-accent);
 
   --ax-success: #4ADE80;
   --ax-warning: #FBBF24;
