@@ -1,13 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { ArrowRight, PlayCircle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useTenant } from "@/lib/tenant/TenantProvider";
 import { AcademyShell } from "@/components/academy/AcademyShell";
 import { CourseRail } from "@/components/academy/CourseRail";
-import { CourseCoverPlaceholder } from "@/components/academy/CourseCoverPlaceholder";
-import { Eyebrow, Progress, Skeleton } from "@/components/academy/ui";
-import { durationLabel, levelLabel } from "@/components/academy/types";
+import { Eyebrow, Skeleton } from "@/components/academy/ui";
+import { ContinueHero } from "@/components/academy/ContinueHero";
 import { useAcademyCatalog } from "@/lib/academy/useCatalog";
 import { useMyList } from "@/lib/list/useMyList";
 
@@ -31,89 +30,32 @@ function Home() {
 
   return (
     <AcademyShell footer={false}>
-      {/* PAINEL DE RETOMADA — utilitário, não marketing */}
-      <section className="ax-container pt-7 md:pt-9">
-        <Eyebrow>Meus estudos</Eyebrow>
-        <h1 className="ax-h1 mt-2 capitalize">Olá, {firstName || "aluno"}</h1>
-        <p className="ax-body mt-1.5 text-[15px]">
-          {resume
-            ? "Retome de onde parou."
-            : "Escolha um título do acervo para começar."}
-        </p>
-
-        <div className="mt-5">
-          {loading && !spotlight ? (
-            <Skeleton className="h-[190px] w-full" />
-          ) : spotlight ? (
-            <div className="ax-panel grid gap-0 overflow-hidden md:grid-cols-[320px_minmax(0,1fr)]">
-              <div className="relative aspect-video md:aspect-auto">
-                {spotlight.cover_url ? (
-                  <img
-                    src={spotlight.cover_url}
-                    alt=""
-                    aria-hidden
-                    className="h-full w-full object-cover"
-                    fetchPriority="high"
-                  />
-                ) : (
-                  <CourseCoverPlaceholder title={spotlight.title} showTitle={false} className="h-full w-full" />
-                )}
-              </div>
-              <div className="flex flex-col justify-center gap-3 p-5 md:p-7">
-                <p className="ax-eyebrow">
-                  {resume ? "Continue estudando" : "Sugestão para começar"}
-                </p>
-                <h2 className="ax-h2">{spotlight.title}</h2>
-                <div className="ax-meta flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                  {[
-                    spotlight.category_id ? categoryNameById[spotlight.category_id] : null,
-                    levelLabel(spotlight.level),
-                    durationLabel(spotlight.duration_minutes),
-                  ]
-                    .filter(Boolean)
-                    .map((m, i) => (
-                      <span key={i}>{m}</span>
-                    ))}
-                </div>
-                {percent > 0 && (
-                  <div className="max-w-sm">
-                    <Progress percent={percent} />
-                    <p className="ax-meta mt-1.5">{percent}% concluído</p>
-                  </div>
-                )}
-                <div className="mt-1 flex flex-wrap gap-2">
-                  <Link
-                    to="/curso/$courseSlug/aprender"
-                    params={{ courseSlug: spotlight.slug }}
-                    className="ax-btn"
-                    data-variant="primary"
-                  >
-                    <PlayCircle size={16} /> {percent > 0 ? "Continuar" : "Começar agora"}
-                  </Link>
-                  <Link
-                    to="/curso/$courseSlug"
-                    params={{ courseSlug: spotlight.slug }}
-                    className="ax-btn"
-                    data-variant="secondary"
-                  >
-                    Detalhes do curso
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="ax-empty">
-              <p className="ax-h3">Nenhum título liberado ainda.</p>
-              <p className="ax-body text-center text-[14px]">
-                Assim que a curadoria publicar cursos, eles aparecem aqui.
-              </p>
-              <Link to="/catalogo" className="ax-btn" data-variant="secondary" data-size="sm">
-                Explorar catálogo <ArrowRight size={14} />
-              </Link>
-            </div>
-          )}
+      {loading && !spotlight ? (
+        <div className="ax-container py-14">
+          <Skeleton className="h-[320px] w-full" />
         </div>
-      </section>
+      ) : spotlight ? (
+        <ContinueHero
+          course={spotlight}
+          percent={percent}
+          resuming={!!resume}
+          categoryName={spotlight.category_id ? categoryNameById[spotlight.category_id] : undefined}
+        />
+      ) : (
+        <section className="ax-container pt-10">
+          <Eyebrow>Meus estudos</Eyebrow>
+          <h1 className="ax-h1 mt-2 capitalize">Olá, {firstName || "aluno"}</h1>
+          <div className="ax-empty mt-6">
+            <p className="ax-h3">Nenhum título liberado ainda.</p>
+            <p className="ax-body text-center text-[14px]">
+              Assim que a curadoria publicar cursos, eles aparecem aqui.
+            </p>
+            <Link to="/catalogo" className="ax-btn" data-variant="secondary" data-size="sm">
+              Explorar catálogo <ArrowRight size={14} />
+            </Link>
+          </div>
+        </section>
+      )}
 
       <div className="space-y-8 pb-20 pt-9 md:space-y-10">
         <CourseRail
