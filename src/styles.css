@@ -636,24 +636,155 @@ html.dark, html.dark body {
    Não herda branding do tenant selecionado no switcher.
    ============================================================ */
 .admin-console {
-  /* Grafite neutro derivado da tinta real do repositório institucional
-     (--ink = oklch(0.13 0.022 255) / --foreground = oklch(0.16 0.022 255)).
-     Console é ferramenta interna: sem cor de marca, sem azul genérico. */
-  --brand-primary:   oklch(0.16 0.022 255);
-  --brand-secondary: oklch(0.13 0.022 255);
-  --brand-accent:    oklch(0.55 0.018 255);
-  --brand-bg:        oklch(0.14 0.020 255);
-  --brand-surface:   oklch(0.18 0.020 255);
-  --brand-surface-2: oklch(0.22 0.018 255);
-  --brand-text:      oklch(0.96 0.005 255);
-  --brand-muted:     oklch(0.68 0.012 255);
-  --brand-border:    oklch(0.96 0.005 255 / 0.10);
-  --tenant-accent:      oklch(0.75 0.015 255);
-  --tenant-accent-ink:  oklch(0.13 0.022 255);
-  background: var(--brand-bg);
-  color: var(--brand-text);
+  /* Console = ferramenta interna. Light-first, neutro, sem tinta de tenant. */
+  --c-canvas:      oklch(0.985 0.002 255);
+  --c-surface:     oklch(1 0 0);
+  --c-surface-2:   oklch(0.972 0.003 255);
+  --c-text:        oklch(0.22 0.015 255);
+  --c-muted:       oklch(0.53 0.012 255);
+  --c-border:      oklch(0.22 0.015 255 / 0.12);
+  --c-border-soft: oklch(0.22 0.015 255 / 0.07);
+  --c-focus:       oklch(0.55 0.13 255);
+  --c-danger:      oklch(0.55 0.19 25);
+  --c-ok:          oklch(0.55 0.12 155);
+  --c-warn:        oklch(0.66 0.13 75);
+  --c-shadow:      0 1px 2px oklch(0.22 0.015 255 / 0.05), 0 8px 24px -16px oklch(0.22 0.015 255 / 0.28);
+
+  /* compat com utilitários brand-* legados dentro do console */
+  --brand-primary:   var(--c-text);
+  --brand-secondary: var(--c-muted);
+  --brand-accent:    var(--c-focus);
+  --brand-bg:        var(--c-canvas);
+  --brand-surface:   var(--c-surface);
+  --brand-surface-2: var(--c-surface-2);
+  --brand-text:      var(--c-text);
+  --brand-muted:     var(--c-muted);
+  --brand-border:    var(--c-border);
+  --tenant-accent:      var(--c-focus);
+  --tenant-accent-ink:  oklch(1 0 0);
+
+  background: var(--c-canvas);
+  color: var(--c-text);
   min-height: 100vh;
+  font-synthesis-weight: none;
+  letter-spacing: -0.005em;
 }
+
+.dark .admin-console {
+  --c-canvas:      oklch(0.16 0.012 255);
+  --c-surface:     oklch(0.20 0.012 255);
+  --c-surface-2:   oklch(0.24 0.012 255);
+  --c-text:        oklch(0.96 0.004 255);
+  --c-muted:       oklch(0.70 0.010 255);
+  --c-border:      oklch(0.96 0.004 255 / 0.12);
+  --c-border-soft: oklch(0.96 0.004 255 / 0.07);
+  --c-focus:       oklch(0.72 0.11 255);
+  --c-shadow:      0 1px 2px oklch(0 0 0 / 0.3);
+}
+
+/* ---- primitivas do console ---- */
+.admin-console .c-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-soft);
+  border-radius: 14px;
+  box-shadow: var(--c-shadow);
+}
+.admin-console .c-muted { color: var(--c-muted); }
+.admin-console .c-divide { border-color: var(--c-border-soft); }
+
+.admin-console .c-input,
+.admin-console .c-select,
+.admin-console .c-textarea {
+  width: 100%;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.875rem;
+  color: var(--c-text);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.admin-console .c-input::placeholder,
+.admin-console .c-textarea::placeholder { color: var(--c-muted); }
+.admin-console .c-input:focus,
+.admin-console .c-select:focus,
+.admin-console .c-textarea:focus {
+  outline: none;
+  border-color: var(--c-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-focus) 22%, transparent);
+}
+.admin-console :focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--c-focus) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.admin-console .c-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+  border-radius: 10px; padding: 0.5rem 0.9rem;
+  font-size: 0.875rem; font-weight: 500; line-height: 1.2;
+  border: 1px solid transparent; cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, opacity .15s ease;
+  white-space: nowrap;
+}
+.admin-console .c-btn:disabled { opacity: .55; cursor: not-allowed; }
+.admin-console .c-btn[data-variant="primary"] {
+  background: var(--c-text); color: var(--c-surface);
+}
+.admin-console .c-btn[data-variant="primary"]:not(:disabled):hover { opacity: .88; }
+.admin-console .c-btn[data-variant="secondary"] {
+  background: var(--c-surface); border-color: var(--c-border); color: var(--c-text);
+}
+.admin-console .c-btn[data-variant="secondary"]:not(:disabled):hover { background: var(--c-surface-2); }
+.admin-console .c-btn[data-variant="ghost"] { background: transparent; color: var(--c-muted); }
+.admin-console .c-btn[data-variant="ghost"]:not(:disabled):hover { background: var(--c-surface-2); color: var(--c-text); }
+.admin-console .c-btn[data-variant="danger"] {
+  background: transparent; color: var(--c-danger); border-color: color-mix(in srgb, var(--c-danger) 35%, transparent);
+}
+.admin-console .c-btn[data-variant="danger"]:not(:disabled):hover { background: color-mix(in srgb, var(--c-danger) 10%, transparent); }
+.admin-console .c-btn[data-size="sm"] { padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 8px; }
+
+.admin-console .c-badge {
+  display: inline-flex; align-items: center; gap: .3rem;
+  border-radius: 999px; padding: 0.12rem 0.55rem;
+  font-size: 0.72rem; font-weight: 500; letter-spacing: .01em;
+  background: var(--c-surface-2); color: var(--c-muted);
+  border: 1px solid var(--c-border-soft);
+}
+.admin-console .c-badge[data-tone="ok"] { color: var(--c-ok); border-color: color-mix(in srgb, var(--c-ok) 30%, transparent); background: color-mix(in srgb, var(--c-ok) 10%, transparent); }
+.admin-console .c-badge[data-tone="warn"] { color: var(--c-warn); border-color: color-mix(in srgb, var(--c-warn) 30%, transparent); background: color-mix(in srgb, var(--c-warn) 12%, transparent); }
+.admin-console .c-badge[data-tone="danger"] { color: var(--c-danger); border-color: color-mix(in srgb, var(--c-danger) 30%, transparent); background: color-mix(in srgb, var(--c-danger) 10%, transparent); }
+.admin-console .c-badge[data-tone="info"] { color: var(--c-focus); border-color: color-mix(in srgb, var(--c-focus) 30%, transparent); background: color-mix(in srgb, var(--c-focus) 10%, transparent); }
+
+.admin-console table.c-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.admin-console .c-table thead th {
+  text-align: left; font-weight: 500; font-size: 0.72rem; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--c-muted);
+  padding: 0.6rem 0.9rem; background: var(--c-surface-2);
+  border-bottom: 1px solid var(--c-border-soft);
+  position: sticky; top: 0; z-index: 1;
+}
+.admin-console .c-table tbody td { padding: 0.65rem 0.9rem; border-top: 1px solid var(--c-border-soft); vertical-align: middle; }
+.admin-console .c-table tbody tr:hover td { background: color-mix(in srgb, var(--c-surface-2) 60%, transparent); }
+
+.admin-console .c-nav-item {
+  display: flex; align-items: center; gap: .55rem;
+  border-radius: 9px; padding: 0.45rem 0.65rem;
+  font-size: 0.86rem; color: var(--c-muted); width: 100%; text-align: left;
+  transition: background .15s ease, color .15s ease;
+}
+.admin-console .c-nav-item:hover { background: var(--c-surface-2); color: var(--c-text); }
+.admin-console .c-nav-item[data-active="true"] {
+  background: var(--c-surface-2); color: var(--c-text); font-weight: 500;
+  box-shadow: inset 2px 0 0 var(--c-focus);
+}
+
+.admin-console .c-skel {
+  background: linear-gradient(90deg, var(--c-surface-2), color-mix(in srgb, var(--c-surface-2) 55%, var(--c-surface)), var(--c-surface-2));
+  background-size: 200% 100%;
+  animation: c-shimmer 1.2s linear infinite;
+  border-radius: 8px;
+}
+@keyframes c-shimmer { to { background-position: -200% 0; } }
 
 /* Motion off */
 @media (prefers-reduced-motion: reduce) {
