@@ -775,8 +775,9 @@ html.dark, html.dark body {
 .admin-console .c-nav-item:hover { background: var(--c-surface-2); color: var(--c-text); }
 .admin-console .c-nav-item[data-active="true"] {
   background: var(--c-surface-2); color: var(--c-text); font-weight: 500;
-  box-shadow: inset 2px 0 0 var(--c-focus);
 }
+.admin-console .c-nav-item[data-active="true"]::before,
+.admin-console .c-nav-item[data-active="true"]::after { content: none; }
 
 .admin-console .c-skel {
   background: linear-gradient(90deg, var(--c-surface-2), color-mix(in srgb, var(--c-surface-2) 55%, var(--c-surface)), var(--c-surface-2));
