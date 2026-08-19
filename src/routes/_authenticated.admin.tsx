@@ -77,8 +77,9 @@ function AdminPage() {
     // Default branding
     await supabase.from("organization_branding").insert({
       organization_id: org.id,
-      primary_color: "#1e40af", secondary_color: "#0ea5e9", accent_color: "#f59e0b",
-      background_color: "#0b1220", surface_color: "#111a2e", text_color: "#e5e7eb",
+      primary_color: "#111114", secondary_color: "#6B6B72", accent_color: "#2563EB",
+      background_color: "#FFFFFF", surface_color: "#FFFFFF", text_color: "#121214",
+      dark_background_color: "#0B0B0E", dark_surface_color: "#141418", dark_text_color: "#F3F3F5",
       environment_name: org.name,
     });
     setNewOrg({ slug: "", name: "", user_limit: "50" });
