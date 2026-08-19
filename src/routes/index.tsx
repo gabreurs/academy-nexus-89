@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
 import { ArrowRight, PlayCircle } from "lucide-react";
 import { useAcademyExperience, useTenant } from "@/lib/tenant/TenantProvider";
 import { useAuth } from "@/lib/auth/AuthProvider";
