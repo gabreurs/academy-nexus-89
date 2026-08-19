@@ -1,101 +1,187 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Search, X } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useTenant } from "@/lib/tenant/TenantProvider";
 import { AcademyHeader } from "@/components/academy/AcademyHeader";
 import { CourseCard } from "@/components/academy/CourseCard";
+import { CardSkeletonGrid, Chip, EmptyState, Eyebrow } from "@/components/academy/ui";
 import { TenantDemoSwitcher } from "@/components/site/TenantDemoSwitcher";
 import { useAcademyCatalog } from "@/lib/academy/useCatalog";
 import { useMyList } from "@/lib/list/useMyList";
+import { levelLabel } from "@/components/academy/types";
 
-export const Route = createFileRoute("/catalogo")({ ssr: false, component: Catalog });
+type CatalogSearch = { q?: string; cat?: string };
+
+export const Route = createFileRoute("/catalogo")({
+  ssr: false,
+  validateSearch: (search: Record<string, unknown>): CatalogSearch => ({
+    q: typeof search.q === "string" && search.q ? search.q : undefined,
+    cat: typeof search.cat === "string" && search.cat ? search.cat : undefined,
+  }),
+  component: Catalog,
+});
+
+const SORTS = [
+  { id: "relevance", label: "Relevância" },
+  { id: "recent", label: "Mais recentes" },
+  { id: "duration", label: "Menor duração" },
+] as const;
 
 function Catalog() {
   const { tenant, loading: tenantLoading } = useTenant();
   const { session } = useAuth();
-  const { loading, courses, categories, categoryNameById, progress } = useAcademyCatalog(
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/catalogo" });
+  const { loading, courses, categories, categoryNameById, progress, ratings } = useAcademyCatalog(
     tenant?.organization.id,
     session?.user?.id,
   );
   const { ids: myListIds, toggle: toggleMyList } = useMyList(session?.user?.id, tenant?.organization.id);
-  const [query, setQuery] = useState("");
-  const [catFilter, setCatFilter] = useState<string | null>(null);
+
+  const [query, setQuery] = useState(search.q ?? "");
+  const [level, setLevel] = useState<string | null>(null);
+  const [sort, setSort] = useState<(typeof SORTS)[number]["id"]>("relevance");
+  const catFilter = search.cat ?? null;
+
+  useEffect(() => setQuery(search.q ?? ""), [search.q]);
 
   const usedCategories = useMemo(
     () => categories.filter((cat) => courses.some((c) => c.category_id === cat.id)),
     [categories, courses],
   );
+  const usedLevels = useMemo(
+    () => Array.from(new Set(courses.map((c) => c.level).filter(Boolean) as string[])),
+    [courses],
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return courses.filter((c) => {
+    const list = courses.filter((c) => {
       if (catFilter && c.category_id !== catFilter) return false;
+      if (level && c.level !== level) return false;
       if (!q) return true;
       return `${c.title} ${c.subtitle ?? ""} ${c.instructor_name ?? ""}`.toLowerCase().includes(q);
     });
-  }, [courses, catFilter, query]);
+    if (sort === "recent") {
+      return [...list].sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
+    }
+    if (sort === "duration") {
+      return [...list].sort((a, b) => (a.duration_minutes ?? 9999) - (b.duration_minutes ?? 9999));
+    }
+    return list;
+  }, [courses, catFilter, level, query, sort]);
 
-  if (tenantLoading) return <div className="academy" />;
+  const setCat = (id: string | null) =>
+    navigate({ search: (prev) => ({ ...prev, cat: id ?? undefined }), replace: true });
+
+  const hasFilters = !!catFilter || !!level || !!query.trim();
+
+  if (tenantLoading) return <div className="academy min-h-screen" />;
 
   return (
-    <div className="academy">
+    <div className="academy min-h-screen">
       <AcademyHeader />
 
-      <main className="academy-container pb-24 pt-10 md:pt-14">
-        <p className="text-[12px] uppercase tracking-[0.2em]" style={{ color: "#A3A3A3" }}>
-          Catálogo
-        </p>
-        <h1 className="mt-3 text-[30px] font-semibold leading-tight md:text-[42px]" style={{ letterSpacing: "-0.03em" }}>
-          Todo o acervo disponível para você
-        </h1>
-        <p className="academy-muted mt-3 max-w-2xl text-[15px]">
-          {courses.length} {courses.length === 1 ? "título liberado" : "títulos liberados"} no plano da sua organização.
+      <main className="ax-container pb-24 pt-8 md:pt-12">
+        <Eyebrow>Catálogo</Eyebrow>
+        <h1 className="ax-h1 mt-2.5">Explore todo o acervo</h1>
+        <p className="ax-body mt-2 text-[15px]">
+          {courses.length} {courses.length === 1 ? "título disponível" : "títulos disponíveis"} para{" "}
+          {tenant?.organization.name ?? "sua organização"}.
         </p>
 
-        <div className="mt-8 flex flex-col gap-4">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por título, tema ou instrutor"
-            aria-label="Buscar cursos"
-            className="w-full max-w-md px-4 py-3 text-[15px]"
-          />
+        {/* Filtros */}
+        <div className="mt-7 space-y-4">
+          <div className="ax-search max-w-md" style={{ height: 44 }}>
+            <Search size={16} className="shrink-0" aria-hidden />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por título, tema ou instrutor"
+              aria-label="Buscar cursos"
+            />
+            {query && (
+              <button type="button" onClick={() => setQuery("")} aria-label="Limpar busca" className="shrink-0">
+                <X size={15} />
+              </button>
+            )}
+          </div>
+
           {usedCategories.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setCatFilter(null)}
-                className="academy-chip"
-                data-tone={catFilter === null ? "solid" : undefined}
-              >
-                Todos
-              </button>
+              <Chip selected={!catFilter} onClick={() => setCat(null)}>
+                Todas as categorias
+              </Chip>
               {usedCategories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setCatFilter(cat.id)}
-                  className="academy-chip"
-                  data-tone={catFilter === cat.id ? "solid" : undefined}
-                >
+                <Chip key={cat.id} selected={catFilter === cat.id} onClick={() => setCat(cat.id)}>
                   {cat.name}
-                </button>
+                </Chip>
               ))}
             </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2">
+            {usedLevels.map((l) => (
+              <Chip key={l} selected={level === l} onClick={() => setLevel(level === l ? null : l)}>
+                {levelLabel(l)}
+              </Chip>
+            ))}
+            <div className="ml-auto flex items-center gap-2">
+              {SORTS.map((s) => (
+                <Chip key={s.id} selected={sort === s.id} onClick={() => setSort(s.id)}>
+                  {s.label}
+                </Chip>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="ax-divider my-7" />
+
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <p className="ax-meta">
+            {loading ? "Carregando…" : `${filtered.length} ${filtered.length === 1 ? "resultado" : "resultados"}`}
+          </p>
+          {hasFilters && (
+            <button
+              className="ax-btn"
+              data-variant="ghost"
+              data-size="sm"
+              onClick={() => {
+                setQuery("");
+                setLevel(null);
+                setCat(null);
+              }}
+            >
+              Limpar filtros
+            </button>
           )}
         </div>
 
         {loading ? (
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="academy-skeleton aspect-video rounded-2xl" />
-            ))}
-          </div>
+          <CardSkeletonGrid count={8} />
         ) : filtered.length === 0 ? (
-          <div className="academy-surface academy-border mt-12 rounded-2xl border p-10 text-center">
-            <p className="text-lg font-semibold">Nenhum título encontrado.</p>
-            <p className="academy-muted mt-2 text-sm">Ajuste a busca ou escolha outra categoria.</p>
-          </div>
+          <EmptyState
+            title="Nenhum título encontrado"
+            description="Ajuste a busca, o nível ou escolha outra categoria."
+            action={
+              <button
+                className="ax-btn"
+                data-variant="secondary"
+                data-size="sm"
+                onClick={() => {
+                  setQuery("");
+                  setLevel(null);
+                  setCat(null);
+                }}
+              >
+                Limpar filtros
+              </button>
+            }
+          />
         ) : (
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="ax-grid">
             {filtered.map((c) => (
               <CourseCard
                 key={c.id}
@@ -103,6 +189,7 @@ function Catalog() {
                 variant="grid"
                 categoryName={c.category_id ? categoryNameById[c.category_id] : undefined}
                 percent={progress[c.id]?.percent ?? 0}
+                rating={ratings?.[c.id]}
                 inMyList={myListIds.has(c.id)}
                 onToggleList={session ? toggleMyList : undefined}
               />
@@ -115,4 +202,3 @@ function Catalog() {
     </div>
   );
 }
-
