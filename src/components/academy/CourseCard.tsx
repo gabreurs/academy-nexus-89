@@ -1,12 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { memo } from "react";
+import { Bookmark, BookmarkCheck, Clock, Star } from "lucide-react";
 import { CourseCoverPlaceholder } from "./CourseCoverPlaceholder";
-import { durationLabel, type AcademyCourse } from "./types";
+import { Badge, Progress } from "./ui";
+import { durationLabel, levelLabel, type AcademyCourse } from "./types";
 
 type Props = {
   course: AcademyCourse;
   categoryName?: string | null;
   percent?: number;
+  rating?: { avg: number; count: number };
   inMyList?: boolean;
   onToggleList?: (id: string) => void;
   /** "rail" = largura fixa em carrossel, "grid" = ocupa a coluna. */
@@ -14,34 +17,34 @@ type Props = {
 };
 
 /**
- * Card ÚNICO de curso. Usado em rails, grids e listas de todos os tenants.
- * Não existe (nem pode existir) variante por organização.
+ * CourseCard 2.0 — card ÚNICO de curso da plataforma.
+ * A capa real manda; o resto é metadado denso e legível. Não existe
+ * (nem pode existir) variante por organização.
  */
 export const CourseCard = memo(function CourseCard({
   course,
   categoryName,
   percent = 0,
+  rating,
   inMyList = false,
   onToggleList,
-  variant = "rail",
 }: Props) {
+  const duration = durationLabel(course.duration_minutes);
+  const level = levelLabel(course.level);
+  const started = percent > 0;
+  const done = percent >= 100;
+
   return (
-    <article className={`academy-card ${variant === "grid" ? "academy-card-grid" : ""}`}>
+    <article className="ax-card group/card">
       <Link
         to="/curso/$courseSlug"
         params={{ courseSlug: course.slug }}
-        className="block"
+        className="block focus-visible:outline-none"
         aria-label={course.title}
       >
-        <div className="relative aspect-video overflow-hidden">
+        <div className="ax-card-media">
           {course.cover_url ? (
-            <img
-              src={course.cover_url}
-              alt={course.title}
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover"
-            />
+            <img src={course.cover_url} alt="" aria-hidden loading="lazy" decoding="async" />
           ) : (
             <CourseCoverPlaceholder
               title={course.title}
@@ -51,51 +54,56 @@ export const CourseCard = memo(function CourseCard({
             />
           )}
 
-          {course.is_required && (
-            <span className="academy-chip absolute left-3 top-3" data-tone="solid">
-              Obrigatório
-            </span>
-          )}
+          <div className="absolute left-2 top-2 flex flex-wrap gap-1.5">
+            {course.is_required && <Badge tone="accent">Obrigatório</Badge>}
+            {done ? <Badge tone="done">Concluído</Badge> : started ? <Badge tone="progress">Em andamento</Badge> : null}
+          </div>
 
-          {percent > 0 && (
-            <div className="absolute inset-x-0 bottom-0 h-[3px]" style={{ background: "rgba(0,0,0,.6)" }}>
-              <div className="h-full" style={{ width: `${percent}%`, background: "var(--tenant-accent)" }} />
+          {started && !done && (
+            <div className="ax-card-overlay">
+              <Progress percent={percent} />
             </div>
           )}
         </div>
       </Link>
 
-      <div className="p-3.5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h3
-              className="line-clamp-2 text-[15px] font-semibold leading-snug md:text-[16px]"
-              style={{ letterSpacing: "-0.02em", color: "#F5F5F5" }}
-            >
-              {course.title}
-            </h3>
-            <p className="mt-1 truncate text-[12px]" style={{ color: "#A3A3A3" }}>
-              {[categoryName, durationLabel(course.duration_minutes)].filter(Boolean).join(" · ") || "\u00A0"}
-            </p>
-          </div>
-          {onToggleList && (
-            <button
-              type="button"
-              onClick={() => onToggleList(course.id)}
-              data-active={inMyList ? "true" : "false"}
-              className="academy-icon-btn academy-card-actions h-9 w-9 shrink-0 text-[15px]"
-              aria-label={inMyList ? "Remover da minha lista" : "Adicionar à minha lista"}
-              title={inMyList ? "Remover da minha lista" : "Adicionar à minha lista"}
-            >
-              {inMyList ? "✓" : "+"}
-            </button>
+      {onToggleList && (
+        <button
+          type="button"
+          onClick={() => onToggleList(course.id)}
+          data-active={inMyList ? "true" : "false"}
+          className="ax-iconbtn ax-card-save"
+          data-size="sm"
+          aria-label={inMyList ? "Remover da minha lista" : "Salvar na minha lista"}
+          title={inMyList ? "Remover da minha lista" : "Salvar na minha lista"}
+        >
+          {inMyList ? <BookmarkCheck size={15} /> : <Bookmark size={15} />}
+        </button>
+      )}
+
+      <div className="ax-card-body">
+        {categoryName && <p className="ax-eyebrow truncate">{categoryName}</p>}
+        <h3 className="ax-card-title">
+          <Link to="/curso/$courseSlug" params={{ courseSlug: course.slug }}>
+            {course.title}
+          </Link>
+        </h3>
+        <div className="ax-meta flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          {duration && (
+            <span className="inline-flex items-center gap-1">
+              <Clock size={12} className="shrink-0" />
+              {duration}
+            </span>
           )}
+          {level && <span>{level}</span>}
+          {rating && rating.count > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <Star size={12} className="shrink-0" style={{ color: "var(--tenant-accent)" }} />
+              {rating.avg.toFixed(1)}
+            </span>
+          )}
+          {started && !done && <span style={{ color: "var(--tenant-accent)" }}>{percent}%</span>}
         </div>
-        {percent > 0 && (
-          <p className="mt-2 text-[11px]" style={{ color: "var(--tenant-accent)" }}>
-            {percent}% concluído
-          </p>
-        )}
       </div>
     </article>
   );

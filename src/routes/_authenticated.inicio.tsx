@@ -43,11 +43,12 @@ function Home() {
         <EmptyHero loading={loading} />
       )}
 
-      <main className="relative z-10 space-y-10 pb-24 pt-8 md:space-y-14 md:pt-10">
+      <main className="relative z-10 space-y-9 pb-24 pt-8 md:space-y-12 md:pt-10">
         <CourseRail
           title="Continue estudando"
           items={continueList}
           progress={progress}
+          ratings={ratings}
           myListIds={myListIds}
           onToggleList={toggleMyList}
           categoryNames={categoryNameById}
@@ -67,6 +68,7 @@ function Home() {
           title="Meus cursos comprados"
           items={purchased}
           progress={progress}
+          ratings={ratings}
           myListIds={myListIds}
           onToggleList={toggleMyList}
           categoryNames={categoryNameById}
@@ -75,6 +77,7 @@ function Home() {
           title="Minha lista"
           items={myList}
           progress={progress}
+          ratings={ratings}
           myListIds={myListIds}
           onToggleList={toggleMyList}
           categoryNames={categoryNameById}
