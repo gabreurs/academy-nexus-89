@@ -44,7 +44,26 @@ export const Route = createFileRoute("/")({
  */
 function HomeRoute() {
   const { loading, visibleSession } = useTenantIdentity();
-  if (loading) return <AcademyShell footer={false}><div className="ax-container py-16"><Skeleton className="h-[380px] w-full" /></div></AcademyShell>;
+  const exp = useAcademyExperience();
+  const navigate = useNavigate();
+  const isCorporate = exp.type === "corporate";
+  // Academy corporativa: quem já entrou não vê a porta institucional de novo.
+  // A decisão vem do MODELO da Academy, nunca do nome do tenant.
+  const shouldRedirect = !loading && !!visibleSession && isCorporate;
+
+  useEffect(() => {
+    if (shouldRedirect) navigate({ to: "/inicio", replace: true });
+  }, [shouldRedirect, navigate]);
+
+  if (loading || shouldRedirect) {
+    return (
+      <AcademyShell footer={false}>
+        <div className="ax-container py-16">
+          <Skeleton className="h-[380px] w-full" />
+        </div>
+      </AcademyShell>
+    );
+  }
   return visibleSession ? <AuthenticatedHome /> : <Storefront />;
 }
 
