@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -141,7 +141,7 @@ function AdminPage() {
       </ConsoleShell>
     );
   }
-  if (!isPlatformAdmin) throw redirect({ to: "/inicio" });
+  if (!isPlatformAdmin) return <Navigate to="/inicio" replace />;
 
   const createOrg = async () => {
     const slug = newOrg.slug.trim().toLowerCase();
