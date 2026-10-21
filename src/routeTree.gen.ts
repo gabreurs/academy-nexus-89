@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as CatalogoRouteImport } from './routes/catalogo'
-import { Route as ImprensaRouteImport } from './routes/imprensa'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SolicitarAcessoRouteImport } from './routes/solicitar-acesso'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
@@ -20,6 +19,7 @@ import { Route as AuthenticatedEmpresaRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated.inicio'
 import { Route as CursoCourseSlugRouteImport } from './routes/curso.$courseSlug'
 import { Route as DemoTenantSlugRouteImport } from './routes/demo.$tenantSlug'
+import { Route as ImprensaIndexRouteImport } from './routes/imprensa.index'
 import { Route as ImprensaSlugRouteImport } from './routes/imprensa.$slug'
 import { Route as AuthenticatedCursoCourseSlugAprenderRouteImport } from './routes/_authenticated.curso_.$courseSlug.aprender'
 
@@ -35,11 +35,6 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const CatalogoRoute = CatalogoRouteImport.update({
   id: '/catalogo',
   path: '/catalogo',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ImprensaRoute = ImprensaRouteImport.update({
-  id: '/imprensa',
-  path: '/imprensa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -77,6 +72,11 @@ const DemoTenantSlugRoute = DemoTenantSlugRouteImport.update({
   path: '/demo/$tenantSlug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImprensaIndexRoute = ImprensaIndexRouteImport.update({
+  id: '/imprensa/',
+  path: '/imprensa/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ImprensaSlugRoute = ImprensaSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -92,7 +92,6 @@ const AuthenticatedCursoCourseSlugAprenderRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/catalogo': typeof CatalogoRoute
-  '/imprensa': typeof ImprensaRouteWithChildren
   '/login': typeof LoginRoute
   '/solicitar-acesso': typeof SolicitarAcessoRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -101,12 +100,12 @@ export interface FileRoutesByFullPath {
   '/curso/$courseSlug': typeof CursoCourseSlugRoute
   '/demo/$tenantSlug': typeof DemoTenantSlugRoute
   '/imprensa/$slug': typeof ImprensaSlugRoute
+  '/imprensa/': typeof ImprensaIndexRoute
   '/curso/$courseSlug/aprender': typeof AuthenticatedCursoCourseSlugAprenderRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/catalogo': typeof CatalogoRoute
-  '/imprensa': typeof ImprensaRouteWithChildren
   '/login': typeof LoginRoute
   '/solicitar-acesso': typeof SolicitarAcessoRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -115,6 +114,7 @@ export interface FileRoutesByTo {
   '/curso/$courseSlug': typeof CursoCourseSlugRoute
   '/demo/$tenantSlug': typeof DemoTenantSlugRoute
   '/imprensa/$slug': typeof ImprensaSlugRoute
+  '/imprensa': typeof ImprensaIndexRoute
   '/curso/$courseSlug/aprender': typeof AuthenticatedCursoCourseSlugAprenderRoute
 }
 export interface FileRoutesById {
@@ -122,7 +122,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/catalogo': typeof CatalogoRoute
-  '/imprensa': typeof ImprensaRouteWithChildren
   '/login': typeof LoginRoute
   '/solicitar-acesso': typeof SolicitarAcessoRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
@@ -131,6 +130,7 @@ export interface FileRoutesById {
   '/curso/$courseSlug': typeof CursoCourseSlugRoute
   '/demo/$tenantSlug': typeof DemoTenantSlugRoute
   '/imprensa/$slug': typeof ImprensaSlugRoute
+  '/imprensa/': typeof ImprensaIndexRoute
   '/_authenticated/curso_/$courseSlug/aprender': typeof AuthenticatedCursoCourseSlugAprenderRoute
 }
 export interface FileRouteTypes {
@@ -138,7 +138,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/catalogo'
-    | '/imprensa'
     | '/login'
     | '/solicitar-acesso'
     | '/admin'
@@ -147,12 +146,12 @@ export interface FileRouteTypes {
     | '/curso/$courseSlug'
     | '/demo/$tenantSlug'
     | '/imprensa/$slug'
+    | '/imprensa/'
     | '/curso/$courseSlug/aprender'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/catalogo'
-    | '/imprensa'
     | '/login'
     | '/solicitar-acesso'
     | '/admin'
@@ -161,13 +160,13 @@ export interface FileRouteTypes {
     | '/curso/$courseSlug'
     | '/demo/$tenantSlug'
     | '/imprensa/$slug'
+    | '/imprensa'
     | '/curso/$courseSlug/aprender'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/catalogo'
-    | '/imprensa'
     | '/login'
     | '/solicitar-acesso'
     | '/_authenticated/admin'
@@ -176,6 +175,7 @@ export interface FileRouteTypes {
     | '/curso/$courseSlug'
     | '/demo/$tenantSlug'
     | '/imprensa/$slug'
+    | '/imprensa/'
     | '/_authenticated/curso_/$courseSlug/aprender'
   fileRoutesById: FileRoutesById
 }
@@ -183,11 +183,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   CatalogoRoute: typeof CatalogoRoute
-  ImprensaRoute: typeof ImprensaRouteWithChildren
   LoginRoute: typeof LoginRoute
   SolicitarAcessoRoute: typeof SolicitarAcessoRoute
   CursoCourseSlugRoute: typeof CursoCourseSlugRoute
   DemoTenantSlugRoute: typeof DemoTenantSlugRoute
+  ImprensaIndexRoute: typeof ImprensaIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -211,13 +211,6 @@ declare module '@tanstack/react-router' {
       path: '/catalogo'
       fullPath: '/catalogo'
       preLoaderRoute: typeof CatalogoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/imprensa': {
-      id: '/imprensa'
-      path: '/imprensa'
-      fullPath: '/imprensa'
-      preLoaderRoute: typeof ImprensaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -269,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoTenantSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/imprensa/': {
+      id: '/imprensa/'
+      path: '/imprensa'
+      fullPath: '/imprensa/'
+      preLoaderRoute: typeof ImprensaIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/imprensa/$slug': {
       id: '/imprensa/$slug'
       path: '/$slug'
@@ -305,27 +305,15 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
-interface ImprensaRouteChildren {
-  ImprensaSlugRoute: typeof ImprensaSlugRoute
-}
-
-const ImprensaRouteChildren: ImprensaRouteChildren = {
-  ImprensaSlugRoute: ImprensaSlugRoute,
-}
-
-const ImprensaRouteWithChildren = ImprensaRoute._addFileChildren(
-  ImprensaRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   CatalogoRoute: CatalogoRoute,
-  ImprensaRoute: ImprensaRouteWithChildren,
   LoginRoute: LoginRoute,
   SolicitarAcessoRoute: SolicitarAcessoRoute,
   CursoCourseSlugRoute: CursoCourseSlugRoute,
   DemoTenantSlugRoute: DemoTenantSlugRoute,
+  ImprensaIndexRoute: ImprensaIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
