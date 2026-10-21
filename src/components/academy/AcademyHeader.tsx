@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Building2, LogOut, Monitor, Moon, Search, Shield, Sun, User } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useTenantIdentity } from "@/lib/tenant/useTenantIdentity";
+import { useTenant } from "@/lib/tenant/TenantProvider";
 import { useTheme, type ThemeChoice } from "@/lib/theme/ThemeProvider";
 import { TenantLogo } from "./TenantLogo";
 
@@ -14,6 +15,8 @@ import { TenantLogo } from "./TenantLogo";
 export function AcademyHeader({ transparent = false }: { transparent?: boolean }) {
   const { isOrgAdmin, signOut } = useAuth();
   const { visibleSession, hasTenantAccess, isPlatformAdmin } = useTenantIdentity();
+  const { tenant } = useTenant();
+  const isPlatformTenant = !!tenant?.organization?.is_platform;
   const showAuthed = !!visibleSession && hasTenantAccess;
   const [scrolled, setScrolled] = useState(false);
   const [q, setQ] = useState("");
@@ -42,6 +45,11 @@ export function AcademyHeader({ transparent = false }: { transparent?: boolean }
           <Link to="/catalogo" className="ax-navlink" activeProps={{ "data-active": "true" } as any}>
             Catálogo
           </Link>
+          {isPlatformTenant && (
+            <Link to="/imprensa" className="ax-navlink" activeProps={{ "data-active": "true" } as any}>
+              Imprensa
+            </Link>
+          )}
         </nav>
 
         <form
