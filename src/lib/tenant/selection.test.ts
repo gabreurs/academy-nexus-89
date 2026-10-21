@@ -1,14 +1,15 @@
-import { describe, expect, test } from "bun:test";
+import { describe, test } from "node:test";
+import { strict as assert } from "node:assert";
 import { explicitTenantSlug } from "./selection";
 
 describe("initial tenant selection", () => {
   test("normal site opening does not select CASA", () => {
-    expect(explicitTenantSlug("/", "?__lovable_load_id=preview")).toBeNull();
+    assert.equal(explicitTenantSlug("/", "?__lovable_load_id=preview"), null);
   });
   test("an explicit CASA demo remains available", () => {
-    expect(explicitTenantSlug("/demo/casa", "")).toBe("casa");
+    assert.equal(explicitTenantSlug("/demo/casa", ""), "casa");
   });
   test("an explicit tenant query remains available", () => {
-    expect(explicitTenantSlug("/", "?tenant=casa")).toBe("casa");
+    assert.equal(explicitTenantSlug("/", "?tenant=casa"), "casa");
   });
 });
