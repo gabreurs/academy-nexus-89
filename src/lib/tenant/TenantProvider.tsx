@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import type { Branding, ResolvedTenant } from "./types";
 import { accentContrastInk } from "./accent";
 import { resolveAcademyExperience, type AcademyExperience } from "./experience";
+import { explicitTenantSlug } from "./selection";
 
 type Ctx = {
   tenant: ResolvedTenant | null;
@@ -23,17 +24,9 @@ const OVERRIDE_KEY = "academy.tenantOverride";
 
 function detectSlugFromEnvironment(): string | null {
   if (typeof window === "undefined") return null;
-  // 1. explicit override (from /demo/:slug or seletor de admin)
-  const stored = window.localStorage.getItem(OVERRIDE_KEY);
-  if (stored) return stored;
-  // 2. query string ?tenant=slug
-  const params = new URLSearchParams(window.location.search);
-  const q = params.get("tenant");
-  if (q) return q;
-  // 3. path /demo/:slug (client-side match)
-  const m = window.location.pathname.match(/^\/demo\/([^\/]+)/);
-  if (m) return m[1];
-  return null;
+  // Seleções antigas de demonstração não podem sequestrar a abertura do site.
+  window.localStorage.removeItem(OVERRIDE_KEY);
+  return explicitTenantSlug(window.location.pathname, window.location.search);
 }
 
 /**
@@ -137,7 +130,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   const resolve = useCallback(async (forcedSlug?: string | null) => {
     const gen = ++genRef.current;
-    const slug = forcedSlug ?? detectSlugFromEnvironment();
+    const slug = forcedSlug === undefined ? detectSlugFromEnvironment() : forcedSlug;
     const host = typeof window !== "undefined" ? window.location.hostname : null;
     const t = await loadTenant({ slug, hostname: host });
     if (gen !== genRef.current) return;
@@ -186,10 +179,10 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   const overrideSlug = useCallback((slug: string | null) => {
     if (typeof window === "undefined") return;
-    if (slug) window.localStorage.setItem(OVERRIDE_KEY, slug);
-    else window.localStorage.removeItem(OVERRIDE_KEY);
+    window.localStorage.removeItem(OVERRIDE_KEY);
     setAttemptedKey(null);
-    void resolve();
+    // A troca vale apenas para a visualização atual, nunca para a próxima abertura.
+    void resolve(slug);
   }, [resolve]);
 
   const experience = useMemo(() => resolveAcademyExperience(tenant), [tenant]);

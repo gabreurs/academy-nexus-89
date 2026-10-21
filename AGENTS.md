@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Tenant demo selections are transient; initial tenant resolution uses only an explicit URL selection or the hostname, never a saved browser override, so demos cannot replace the company's default site.
