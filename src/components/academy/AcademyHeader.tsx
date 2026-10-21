@@ -15,6 +15,8 @@ import { TenantLogo } from "./TenantLogo";
 export function AcademyHeader({ transparent = false }: { transparent?: boolean }) {
   const { isOrgAdmin, signOut } = useAuth();
   const { visibleSession, hasTenantAccess, isPlatformAdmin } = useTenantIdentity();
+  const { tenant } = useTenant();
+  const isPlatformTenant = !!tenant?.organization?.is_platform;
   const showAuthed = !!visibleSession && hasTenantAccess;
   const [scrolled, setScrolled] = useState(false);
   const [q, setQ] = useState("");
@@ -43,6 +45,11 @@ export function AcademyHeader({ transparent = false }: { transparent?: boolean }
           <Link to="/catalogo" className="ax-navlink" activeProps={{ "data-active": "true" } as any}>
             Catálogo
           </Link>
+          {isPlatformTenant && (
+            <Link to="/imprensa" className="ax-navlink" activeProps={{ "data-active": "true" } as any}>
+              Imprensa
+            </Link>
+          )}
         </nav>
 
         <form
