@@ -3,7 +3,7 @@ import { AcademyShell } from "@/components/academy/AcademyShell";
 import { Eyebrow } from "@/components/academy/ui";
 import { NEWS_ARTICLES, formatArticleDate } from "@/lib/news/articles";
 
-export const Route = createFileRoute("/imprensa")({
+export const Route = createFileRoute("/imprensa/")({
   ssr: false,
   head: () => ({
     meta: [
