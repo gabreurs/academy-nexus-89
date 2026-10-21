@@ -37,16 +37,19 @@ export const Route = createFileRoute("/")({
 });
 
 /**
- * `/` tem dois comportamentos:
- *  - visitante  → landing institucional (corporate) ou storefront (marketplace)
+ * `/` tem três comportamentos:
+ *  - visitante no tenant plataforma (SíndicoLab) → site institucional da empresa
+ *  - visitante em Academy corporativa → landing institucional do tenant
  *  - autenticado com acesso ao tenant → home de retomada + descoberta
  * `/inicio` continua sendo o dashboard "meus estudos".
  */
 function HomeRoute() {
   const { loading, visibleSession } = useTenantIdentity();
+  const { tenant, loading: tenantLoading } = useTenant();
   const exp = useAcademyExperience();
   const navigate = useNavigate();
   const isCorporate = exp.type === "corporate";
+  const isPlatform = !!tenant?.organization?.is_platform;
   // Academy corporativa: quem já entrou não vê a porta institucional de novo.
   // A decisão vem do MODELO da Academy, nunca do nome do tenant.
   const shouldRedirect = !loading && !!visibleSession && isCorporate;
@@ -55,12 +58,19 @@ function HomeRoute() {
     if (shouldRedirect) navigate({ to: "/inicio", replace: true });
   }, [shouldRedirect, navigate]);
 
-  if (loading || shouldRedirect) {
+  if (loading || tenantLoading || shouldRedirect) {
     return (
       <AcademyShell footer={false}>
         <div className="ax-container py-16">
           <Skeleton className="h-[380px] w-full" />
         </div>
+      </AcademyShell>
+    );
+  }
+  if (!visibleSession && isPlatform) {
+    return (
+      <AcademyShell>
+        <SindicoLabHome />
       </AcademyShell>
     );
   }

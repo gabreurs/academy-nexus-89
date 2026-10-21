@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Building2, LogOut, Monitor, Moon, Search, Shield, Sun, User } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useTenantIdentity } from "@/lib/tenant/useTenantIdentity";
+import { useTenant } from "@/lib/tenant/TenantProvider";
 import { useTheme, type ThemeChoice } from "@/lib/theme/ThemeProvider";
 import { TenantLogo } from "./TenantLogo";
 
