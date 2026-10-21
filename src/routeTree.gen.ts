@@ -78,9 +78,9 @@ const ImprensaIndexRoute = ImprensaIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ImprensaSlugRoute = ImprensaSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => ImprensaRoute,
+  id: '/imprensa/$slug',
+  path: '/imprensa/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedCursoCourseSlugAprenderRoute =
   AuthenticatedCursoCourseSlugAprenderRouteImport.update({
@@ -187,6 +187,7 @@ export interface RootRouteChildren {
   SolicitarAcessoRoute: typeof SolicitarAcessoRoute
   CursoCourseSlugRoute: typeof CursoCourseSlugRoute
   DemoTenantSlugRoute: typeof DemoTenantSlugRoute
+  ImprensaSlugRoute: typeof ImprensaSlugRoute
   ImprensaIndexRoute: typeof ImprensaIndexRoute
 }
 
@@ -271,10 +272,10 @@ declare module '@tanstack/react-router' {
     }
     '/imprensa/$slug': {
       id: '/imprensa/$slug'
-      path: '/$slug'
+      path: '/imprensa/$slug'
       fullPath: '/imprensa/$slug'
       preLoaderRoute: typeof ImprensaSlugRouteImport
-      parentRoute: typeof ImprensaRoute
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/curso_/$courseSlug/aprender': {
       id: '/_authenticated/curso_/$courseSlug/aprender'
@@ -313,6 +314,7 @@ const rootRouteChildren: RootRouteChildren = {
   SolicitarAcessoRoute: SolicitarAcessoRoute,
   CursoCourseSlugRoute: CursoCourseSlugRoute,
   DemoTenantSlugRoute: DemoTenantSlugRoute,
+  ImprensaSlugRoute: ImprensaSlugRoute,
   ImprensaIndexRoute: ImprensaIndexRoute,
 }
 export const routeTree = rootRouteImport
