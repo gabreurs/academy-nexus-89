@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { withBase } from "@/lib/urls";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -137,7 +138,7 @@ function CoursePage() {
       >
         <div className="ax-hero-media">
           {course.cover_url ? (
-            <img src={course.cover_url} alt="" aria-hidden fetchPriority="high" />
+            <img src={withBase(course.cover_url)} alt="" aria-hidden fetchPriority="high" />
           ) : (
             <CourseCoverPlaceholder title={course.title} showTitle={false} className="h-full w-full" />
           )}

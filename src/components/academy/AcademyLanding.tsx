@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { withBase } from "@/lib/urls";
 import { ArrowRight } from "lucide-react";
 import { useAcademyExperience } from "@/lib/tenant/TenantProvider";
 import { Eyebrow } from "./ui";
@@ -48,11 +49,11 @@ export function AcademyLanding({
           {art.length > 0 && (
             <div className="hidden lg:grid grid-cols-2 gap-3">
               <div className="ax-hero-art col-span-2" style={{ aspectRatio: "16 / 8" }}>
-                <img src={art[0].cover_url!} alt="" aria-hidden loading="lazy" />
+                <img src={withBase(art[0].cover_url!)} alt="" aria-hidden loading="lazy" />
               </div>
               {art.slice(1, 3).map((c) => (
                 <div key={c.id} className="ax-hero-art">
-                  <img src={c.cover_url!} alt="" aria-hidden loading="lazy" />
+                  <img src={withBase(c.cover_url!)} alt="" aria-hidden loading="lazy" />
                 </div>
               ))}
             </div>

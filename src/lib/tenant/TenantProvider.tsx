@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import type { Branding, ResolvedTenant } from "./types";
+import { withBase } from "@/lib/urls";
 import { accentContrastInk } from "./accent";
 import { resolveAcademyExperience, type AcademyExperience } from "./experience";
 import { explicitTenantSlug } from "./selection";
@@ -73,7 +74,7 @@ function applyTenant(t: ResolvedTenant | null) {
   if (b.favicon_url) {
     let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");
     if (!link) { link = document.createElement("link"); link.rel = "icon"; document.head.appendChild(link); }
-    link.href = b.favicon_url;
+    link.href = withBase(b.favicon_url);
   }
   void root;
 }

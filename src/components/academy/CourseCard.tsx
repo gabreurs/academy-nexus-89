@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { withBase } from "@/lib/urls";
 import { memo } from "react";
 import { Bookmark, BookmarkCheck, Clock, Star } from "lucide-react";
 import { CourseCoverPlaceholder } from "./CourseCoverPlaceholder";
@@ -44,7 +45,7 @@ export const CourseCard = memo(function CourseCard({
       >
         <div className="ax-card-media">
           {course.cover_url ? (
-            <img src={course.cover_url} alt="" aria-hidden loading="lazy" decoding="async" />
+            <img src={withBase(course.cover_url)} alt="" aria-hidden loading="lazy" decoding="async" />
           ) : (
             <CourseCoverPlaceholder
               title={course.title}
