@@ -14,6 +14,7 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 const envBase = process.env.VITE_APP_BASE || "/";
+const viteBase = envBase === "/" ? "/" : `${envBase.replace(/\/+$/, "")}/`;
 
 export default defineConfig({
   vite: { base: viteBase },
