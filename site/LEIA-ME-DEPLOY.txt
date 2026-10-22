@@ -1,0 +1,18 @@
+SÍNDICOLAB ACADEMY — PACOTE DE PUBLICAÇÃO (build estático, base /academy)
+=========================================================================
+
+COMO PUBLICAR NO CPANEL
+1. Suba o CONTEÚDO desta pasta para a pasta que serve a Academy
+   (ex.: public_html/academy). Mantenha o .htaccess junto.
+2. Confirme que https://sindicolab.com.br/academy abre a home.
+3. Teste uma rota interna (ex.: /academy/catalogo) recarregando com F5 —
+   o .htaccess faz o fallback para o index.html.
+4. Para um subdomínio (ex.: casa.sindicolab.com.br), sirva ESTA MESMA pasta
+   no document root do subdomínio e reconstrua o pacote com base "/"
+   (pedir ao chat Lovable, variável VITE_APP_BASE vazia).
+
+IMPORTANTE
+- Este build resolve rotas em /academy (base configurada no build).
+- Os hostnames de produção precisam estar registrados no banco
+  (organization_domains) para o white label resolver o tenant certo.
+- Cadastre o domínio/subdomínio nas Redirect URLs do Auth no backend.
