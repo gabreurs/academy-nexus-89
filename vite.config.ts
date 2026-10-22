@@ -11,8 +11,9 @@
  * (mesma variável lida por src/router.tsx para o basepath do router).
  * Sem a variável, o build fica em "/" — comportamento padrão da Lovable.
  */
+import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+
 const envBase = process.env.VITE_APP_BASE || "/";
-const viteBase = envBase === "/" ? "/" : `${envBase.replace(/\/+$/, "")}/`;
 
 export default defineConfig({
   vite: { base: viteBase },
