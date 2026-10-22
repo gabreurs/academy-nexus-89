@@ -1,0 +1,9 @@
+# SíndicoLab Academy — SPA estática (TanStack Start, ssr:false)
+# Fallback: qualquer rota sem arquivo cai no index.html.
+# Funciona no domínio raiz OU dentro de /academy (caminho relativo ao htaccess).
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . index.html [L]
+</IfModule>

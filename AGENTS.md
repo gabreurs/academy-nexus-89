@@ -10,3 +10,5 @@
 <!-- LOVABLE:END -->
 
 - Tenant demo selections are transient; initial tenant resolution uses only an explicit URL selection or the hostname, never a saved browser override, so demos cannot replace the company's default site.
+- Static delivery (CPanel): the deliverable is the `site/` folder (client build + .htaccess SPA fallback), built with `VITE_APP_BASE=/academy` (vite base + router basepath, default "/"). All DB/public image URLs render through `withBase()` (src/lib/urls.ts) and the `/__l5e/` covers are vendored under `public/__l5e/`, so the bundle is self-sufficient outside Lovable hosting. Never reference absolute asset URLs directly in components.
+

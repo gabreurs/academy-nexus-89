@@ -1,5 +1,6 @@
 import { useTenant } from "@/lib/tenant/TenantProvider";
 import { useTheme } from "@/lib/theme/ThemeProvider";
+import { withBase } from "@/lib/urls";
 
 /**
  * Logo real da organização, sempre a partir de organization_branding.
@@ -19,14 +20,14 @@ export function TenantLogo({ className = "", onDark = false }: { className?: str
   const preferred = darkSurface ? forDark : forLight;
   const fallback = darkSurface ? forLight : forDark;
 
-  if (preferred) return <img src={preferred} alt={name} className={`h-7 w-auto ${className}`} />;
+  if (preferred) return <img src={withBase(preferred)} alt={name} className={`h-7 w-auto ${className}`} />;
   if (fallback) {
     return (
       <span
         className="inline-flex items-center rounded-lg px-2.5 py-1.5"
         style={{ background: darkSurface ? "#FFFFFF" : "#101014" }}
       >
-        <img src={fallback} alt={name} className={`h-5 w-auto ${className}`} />
+        <img src={withBase(fallback)} alt={name} className={`h-5 w-auto ${className}`} />
       </span>
     );
   }

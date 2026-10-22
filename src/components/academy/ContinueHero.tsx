@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { withBase } from "@/lib/urls";
 import { Info, PlayCircle } from "lucide-react";
 import type { AcademyCourse } from "./types";
 import { durationLabel, levelLabel } from "./types";
@@ -44,7 +45,7 @@ export function ContinueHero({
   /** "learn" abre o ambiente do curso; "details" leva à página do curso. */
   primaryTo?: "learn" | "details";
 }) {
-  const art = course.banner_url || course.cover_url || null;
+  const art = withBase(course.banner_url || course.cover_url || null);
   const meta = [categoryName, levelLabel(course.level), durationLabel(course.duration_minutes)].filter(
     Boolean,
   ) as string[];

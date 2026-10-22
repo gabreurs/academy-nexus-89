@@ -1,4 +1,5 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { withBase } from "@/lib/urls";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -295,7 +296,7 @@ function EmpresaPage() {
 
   const brandMark = {
     name: org?.name ?? "Academy",
-    logoUrl: branding?.logo_light_url ?? branding?.logo_dark_url ?? null,
+    logoUrl: withBase(branding?.logo_light_url ?? branding?.logo_dark_url ?? ""),
     accent: branding?.accent_color ?? null,
   };
 

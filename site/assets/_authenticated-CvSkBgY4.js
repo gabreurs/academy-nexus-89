@@ -1,0 +1,1 @@
+import{c as e,d as t,l as n}from"./AuthProvider-BWQBEbjr.js";import{g as r,p as i}from"./index-DBb2HNGT.js";import{t as a}from"./useTenantIdentity-CgJeiuPi.js";var o=t(n()),s=e();function c(){let{loading:e,session:t,hasTenantAccess:n}=a(),c=r();return(0,o.useEffect)(()=>{!e&&t&&!n&&c({to:`/`,replace:!0})},[e,t,n,c]),!e&&t&&!n?null:(0,s.jsx)(i,{})}export{c as component};

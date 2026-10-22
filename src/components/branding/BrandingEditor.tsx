@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { withBase } from "@/lib/urls";
 import { supabase } from "@/integrations/supabase/client";
 import { applyBrandingVars } from "@/lib/tenant/TenantProvider";
 import { accentContrastInk } from "@/lib/tenant/accent";
@@ -125,7 +126,7 @@ export function BrandingEditor({ organizationId }: { organizationId: string }) {
       ink: dark ? branding.dark_text_color : branding.text_color,
       accent: branding.accent_color,
       onAccent: accentContrastInk(branding.accent_color),
-      logo: dark ? branding.logo_dark_url ?? branding.logo_light_url : branding.logo_light_url ?? branding.logo_dark_url,
+      logo: withBase(dark ? branding.logo_dark_url ?? branding.logo_light_url : branding.logo_light_url ?? branding.logo_dark_url),
     };
   }, [branding, mode]);
 
@@ -231,7 +232,7 @@ export function BrandingEditor({ organizationId }: { organizationId: string }) {
                 <Input value={branding.banner_url ?? ""} onChange={(e) => upd("banner_url", e.target.value || null)} placeholder="https://…" />
               </Field>
               {branding.banner_url && (
-                <img src={branding.banner_url} alt="" className="aspect-[16/6] w-full rounded-lg object-cover" />
+                <img src={withBase(branding.banner_url)} alt="" className="aspect-[16/6] w-full rounded-lg object-cover" />
               )}
               <Field label="Título de boas-vindas">
                 <Input value={branding.welcome_title ?? ""} onChange={(e) => upd("welcome_title", e.target.value || null)} />
@@ -296,7 +297,7 @@ export function BrandingEditor({ organizationId }: { organizationId: string }) {
               className="relative m-3 overflow-hidden rounded-xl"
               style={{ background: branding.banner_url ? undefined : `${preview.ink}0f`, aspectRatio: "16/8" }}
             >
-              {branding.banner_url && <img src={branding.banner_url} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+              {branding.banner_url && <img src={withBase(branding.banner_url)} alt="" className="absolute inset-0 h-full w-full object-cover" />}
               <div className="absolute inset-0" style={{ background: branding.banner_url ? "rgba(0,0,0,.28)" : "transparent" }} />
               <div className="absolute inset-0 flex flex-col justify-end gap-2 p-4" style={{ color: branding.banner_url ? "#fff" : preview.ink }}>
                 <p className="text-[15px]" style={{ fontWeight: 500 }}>{branding.welcome_title || "Continue de onde parou"}</p>

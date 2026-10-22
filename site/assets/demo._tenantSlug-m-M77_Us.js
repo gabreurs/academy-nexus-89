@@ -1,0 +1,1 @@
+import{c as e,d as t,l as n}from"./AuthProvider-BWQBEbjr.js";import{h as r,u as i,v as a}from"./index-DBb2HNGT.js";var o=t(n()),s=e();function c(){let{tenantSlug:e}=a({from:`/demo/$tenantSlug`}),{overrideSlug:t}=i();return(0,o.useEffect)(()=>{t(e)},[e]),(0,s.jsx)(r,{to:`/`})}export{c as component};
